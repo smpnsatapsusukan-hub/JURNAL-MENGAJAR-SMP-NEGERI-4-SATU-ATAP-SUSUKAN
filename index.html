@@ -86,6 +86,26 @@ table{min-width:0}th,td{font-size:11px;border:1px solid #888;color:#000}}
 <div class="btns"><button id="save">Simpan jurnal</button><button class="sec" id="reset">Kosongkan form</button></div>
 </section>
 
+<section class="card admin-panel hide" id="adminpanel">
+<h2>Kelola Guru</h2>
+<div class="grid">
+<div class="wide"><label for="adminNama">Nama guru</label><input id="adminNama" placeholder="Contoh: DADUN EKO WIDODO, S.Pd."></div>
+<div><label for="adminPin">PIN</label><input id="adminPin" inputmode="numeric" placeholder="Contoh: 1234"></div>
+<div><label for="adminPeran">Peran</label><select id="adminPeran"><option value="guru">Guru</option><option value="admin">Admin</option></select></div>
+</div>
+<div class="btns">
+<button id="adminSave">Simpan perubahan</button>
+<button class="sec" id="adminAdd">Tambah baru</button>
+<button class="sec" id="adminResetForm">Batal</button>
+</div>
+<div class="wrap">
+<table>
+<thead><tr><th>No</th><th>Nama Guru</th><th>PIN</th><th>Peran</th><th>Aksi</th></tr></thead>
+<tbody id="adminRows"></tbody>
+</table>
+</div>
+</section>
+
 <section class="card">
 <h2 id="ltitle">Daftar jurnal</h2>
 <div class="tools">
@@ -144,7 +164,7 @@ const DEFAULT_USERS = [
 const HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const $=i=>document.getElementById(i);
-let me=null,data=[],editId=null,guruList=[];
+let me=null,data=[],editId=null,guruList=[],adminEditIndex=null;
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=v=>{v=parseInt(v,10);return isNaN(v)||v<0?0:v};
@@ -157,6 +177,13 @@ function normalizeGuru(raw){
   return list
     .map(g => ({ nama: String(g && g.nama || '').trim(), peran: String(g && g.peran || 'guru').trim() }))
     .filter(g => g.nama);
+}
+
+function normalizeUsers(raw){
+  const list = Array.isArray(raw) ? raw : [];
+  return list
+    .map(u => ({ nama: String(u && u.nama || '').trim(), pin: String(u && u.pin || '').trim(), peran: String(u && u.peran || 'guru').trim() }))
+    .filter(u => u.nama);
 }
 
 function ensureSeedData(){
@@ -208,10 +235,20 @@ async function loadGuruList(){
 function getUsers(){
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE.users) || 'null');
-    return Array.isArray(stored) && stored.length ? stored : DEFAULT_USERS;
-  } catch (e) {
-    return DEFAULT_USERS;
-  }
+    const users = normalizeUsers(stored || DEFAULT_USERS);
+    if (users.length) return users;
+  } catch (e) {}
+  return normalizeUsers(DEFAULT_USERS);
+}
+
+function saveUsers(nextUsers){
+  const users = normalizeUsers(nextUsers);
+  localStorage.setItem(STORAGE.users, JSON.stringify(users));
+  const guru = users.map(u => ({ nama: u.nama, peran: u.peran || 'guru' }));
+  localStorage.setItem(STORAGE.guru, JSON.stringify(guru));
+  guruList = guru;
+  populateLoginList();
+  renderAdminList();
 }
 
 function getJournals(){
@@ -225,6 +262,11 @@ function getJournals(){
 
 function saveJournals(list){
   localStorage.setItem(STORAGE.journals, JSON.stringify(list));
+}
+
+function populateLoginList(){
+  const users = getUsers();
+  $('ln').innerHTML = '<option value="">Pilih nama Anda</option>' + users.map(u => '<option>' + esc(u.nama) + '</option>').join('');
 }
 
 async function api(body){
@@ -272,12 +314,7 @@ function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';cle
 
 async function init(){
   guruList = await loadGuruList();
-  if (!guruList.length) {
-    $('lerr').textContent = 'Daftar guru tidak tersedia.';
-    return;
-  }
-
-  $('ln').innerHTML = '<option value="">Pilih nama Anda</option>' + guruList.map(g => '<option>' + esc(g.nama) + '</option>').join('');
+  populateLoginList();
 
   try {
     const s = JSON.parse(localStorage.getItem('jurnalLogin') || 'null');
@@ -325,6 +362,95 @@ function logout(){
 
 function busy(btn, on){ btn.disabled = on; }
 
+function getCurrentUsers(){
+  return normalizeUsers(getUsers());
+}
+
+function renderAdminList(){
+  const users = getCurrentUsers();
+  if (!users.length) {
+    $('adminRows').innerHTML = '<tr><td colspan="5" class="empty">Belum ada data guru.</td></tr>';
+    return;
+  }
+
+  $('adminRows').innerHTML = users.map((u, i) => `
+    <tr>
+      <td class="n">${i + 1}</td>
+      <td>${esc(u.nama)}</td>
+      <td>${esc(u.pin)}</td>
+      <td>${esc(u.peran)}</td>
+      <td>
+        <button class="sm" data-edit-user="${i}">Edit</button>
+        <button class="sm dg" data-delete-user="${i}">Hapus</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function resetAdminForm(){
+  adminEditIndex = null;
+  $('adminNama').value = '';
+  $('adminPin').value = '';
+  $('adminPeran').value = 'guru';
+  $('adminSave').textContent = 'Simpan perubahan';
+}
+
+function openAdminForm(index){
+  const users = getCurrentUsers();
+  const user = users[index];
+  if (!user) return;
+  adminEditIndex = index;
+  $('adminNama').value = user.nama;
+  $('adminPin').value = user.pin;
+  $('adminPeran').value = user.peran || 'guru';
+  $('adminSave').textContent = 'Simpan perubahan';
+  $('adminNama').focus();
+}
+
+function saveAdminUser(){
+  const nama = $('adminNama').value.trim();
+  const pin = $('adminPin').value.trim();
+  const peran = $('adminPeran').value;
+
+  if (!nama || !pin) {
+    toast('Nama dan PIN wajib diisi.');
+    return;
+  }
+
+  const users = getCurrentUsers();
+
+  if (adminEditIndex === null) {
+    if (users.some(u => u.nama.toLowerCase() === nama.toLowerCase())) {
+      toast('Nama guru sudah ada.');
+      return;
+    }
+    users.push({ nama, pin, peran });
+  } else {
+    users[adminEditIndex] = { ...users[adminEditIndex], nama, pin, peran };
+  }
+
+  saveUsers(users);
+  resetAdminForm();
+  toast('Data guru berhasil disimpan.');
+  if (me && me.peran === 'admin') {
+    start();
+  }
+}
+
+function deleteAdminUser(index){
+  const users = getCurrentUsers();
+  const target = users[index];
+  if (!target) return;
+  if (!confirm('Hapus guru "' + target.nama + '"?')) return;
+  users.splice(index, 1);
+  saveUsers(users);
+  if (adminEditIndex === index) resetAdminForm();
+  toast('Guru dihapus.');
+  if (me && me.peran === 'admin') {
+    start();
+  }
+}
+
 async function start(){
   $('loginbox').classList.add('hide');
   $('app').classList.remove('hide');
@@ -334,10 +460,19 @@ async function start(){
   $('who').textContent = me.nama + (admin ? ' (admin)' : '');
   $('ltitle').textContent = admin ? 'Daftar jurnal semua guru' : 'Daftar jurnal saya';
 
-  const names = guruList.filter(g => g.peran !== 'admin').map(g => g.nama);
+  const users = getCurrentUsers();
+  const names = users.filter(g => g.peran !== 'admin').map(g => g.nama);
   $('guru').innerHTML = (admin ? names : [me.nama]).map(x => '<option>' + esc(x) + '</option>').join('') || '<option>' + esc(me.nama) + '</option>';
   $('guru').disabled = !admin;
-  if (admin) $('fgbox').classList.remove('hide');
+  if (admin) $('fgbox').classList.remove('hide'); else $('fgbox').classList.add('hide');
+
+  if (admin) {
+    $('adminpanel').classList.remove('hide');
+    renderAdminList();
+    resetAdminForm();
+  } else {
+    $('adminpanel').classList.add('hide');
+  }
 
   $('bulan').value = today().slice(0, 7);
   clearForm(false);
@@ -352,7 +487,7 @@ async function refresh(){
   }
 
   data = Array.isArray(r.data) ? r.data : [];
-  if (me.peran === 'admin') {
+  if (me && me.peran === 'admin') {
     const cur = $('fg').value;
     const u = [...new Set(data.map(x => x.guru))].sort();
     $('fg').innerHTML = '<option value="">Semua guru</option>' + u.map(x => '<option>' + esc(x) + '</option>').join('');
@@ -361,150 +496,41 @@ async function refresh(){
   render();
 }
 
-function setHari(){ $('hari').value = $('tgl').value ? HARI[parts($('tgl').value).getDay()] : ''; }
-function hitung(){ $('hadir').value = n($('total').value) - n($('sakit').value) - n($('izin').value) - n($('alpa').value); }
+function setHari(){$('hari').value=$('tgl').value?HARI[parts($('tgl').value).getDay()]:''}
+function hitung(){$('hadir').value=n($('total').value)-n($('sakit').value)-n($('izin').value)-n($('alpa').value)}
 
-function clearForm(keep){
-  editId = null;
-  $('ftitle').textContent = 'Catat jurnal baru';
-  $('save').textContent = 'Simpan jurnal';
-  ['jam','kelas','mapel','materi','ket'].forEach(i => $(i).value = '');
-  ['total','sakit','izin','alpa'].forEach(i => $(i).value = 0);
-  if (!keep) $('tgl').value = today();
-  setHari();
-  hitung();
-}
+function clearForm(keep){editId=null;$('ftitle').textContent='Catat jurnal baru';$('save').textContent='Simpan jurnal';['jam','kelas','mapel','materi','ket'].forEach(i=>$(i).value='');['total','sakit','izin','alpa'].forEach(i=>$(i).value=0);if(!keep)$('tgl').value=today();setHari();hitung()}
 
 async function save(){
-  const r = {
-    id: editId,
-    tgl: $('tgl').value,
-    guru: $('guru').value,
-    jam: $('jam').value.trim(),
-    kelas: $('kelas').value.trim(),
-    mapel: $('mapel').value.trim(),
-    materi: $('materi').value.trim(),
-    total: n($('total').value),
-    sakit: n($('sakit').value),
-    izin: n($('izin').value),
-    alpa: n($('alpa').value),
-    ket: $('ket').value.trim(),
-    hadir: n($('hadir').value)
-  };
-
-  if (!r.tgl || !r.guru || !r.jam || !r.mapel || !r.materi) {
-    toast('Lengkapi tanggal, nama guru, jam ke-, mata pelajaran, dan uraian materi.');
-    return;
-  }
-
-  if (r.sakit + r.izin + r.alpa > r.total) {
-    toast('Jumlah sakit, izin, dan alpa melebihi jumlah siswa di kelas.');
-    return;
-  }
-
-  busy($('save'), true);
-  const res = await api({ aksi: 'simpan', jurnal: r });
-  busy($('save'), false);
-
-  if (!res.ok) {
-    toast(res.pesan);
-    return;
-  }
-
-  toast(editId ? 'Jurnal diperbarui.' : 'Jurnal tersimpan.');
-  $('bulan').value = r.tgl.slice(0, 7);
-  clearForm(true);
-  await refresh();
+  const r={id:editId,tgl:$('tgl').value,guru:$('guru').value,jam:$('jam').value.trim(),kelas:$('kelas').value.trim(),mapel:$('mapel').value.trim(),materi:$('materi').value.trim(),total:n($('total').value),sakit:n($('sakit').value),izin:n($('izin').value),alpa:n($('alpa').value),ket:$('ket').value.trim(),hadir:n($('hadir').value)};
+  if(!r.tgl||!r.guru||!r.jam||!r.mapel||!r.materi){toast('Lengkapi tanggal, nama guru, jam ke-, mata pelajaran, dan uraian materi.');return}
+  if(r.sakit+r.izin+r.alpa>r.total){toast('Jumlah sakit, izin, dan alpa melebihi jumlah siswa di kelas.');return}
+  busy($('save'),true);const res=await api({aksi:'simpan',jurnal:r});busy($('save'),false);
+  if(!res.ok){toast(res.pesan);return}
+  toast(editId?'Jurnal diperbarui.':'Jurnal tersimpan.');$('bulan').value=r.tgl.slice(0,7);clearForm(true);await refresh()
 }
 
 function view(){
-  const b = $('bulan').value;
-  const q = $('cari').value.toLowerCase();
-  const g = me.peran === 'admin' ? $('fg').value : '';
-
-  return data.filter(r =>
-    (!b || r.tgl.slice(0, 7) === b) &&
-    (!g || r.guru === g) &&
-    (!q || (r.mapel + ' ' + r.kelas + ' ' + r.materi + ' ' + r.guru).toLowerCase().includes(q))
-  ).sort((a,c) => a.tgl === c.tgl ? a.jam.localeCompare(c.jam, 'id', { numeric: true }) : a.tgl < c.tgl ? -1 : 1);
+  const b=$('bulan').value,q=$('cari').value.toLowerCase(),g=me&&me.peran==='admin'?$('fg').value:'';
+  return data.filter(r=>(!b||r.tgl.slice(0,7)===b)&&(!g||r.guru===g)&&(!q||(r.mapel+' '+r.kelas+' '+r.materi+' '+r.guru).toLowerCase().includes(q))).sort((a,c)=>a.tgl===c.tgl?a.jam.localeCompare(c.jam,'id',{numeric:true}):a.tgl<c.tgl?-1:1)
 }
 
 function render(){
-  const l = view();
-  const t = { total: 0, hadir: 0, sakit: 0, izin: 0, alpa: 0 };
-  let h = '';
-
-  l.forEach((r, i) => {
-    for (const k in t) t[k] += r[k];
-    h += '<tr><td class="n">' + (i + 1) + '</td><td>' + esc(fmt(r.tgl)) + '</td><td>' + esc(r.guru) + '</td><td class="n">' + esc(r.jam) + '</td><td>' + esc(r.kelas) + '</td><td>' + esc(r.mapel) + '</td><td>' + esc(r.materi) + (r.ket ? '<br><small>' + esc(r.ket) + '</small>' : '') + '</td><td class="n">' + esc(r.total) + '</td><td class="n">' + esc(r.hadir) + '</td><td class="n">' + esc(r.sakit) + '</td><td class="n">' + esc(r.izin) + '</td><td class="n">' + esc(r.alpa) + '</td><td>' + esc(r.ket || '') + '</td></tr>';
-  });
-
-  $('rows').innerHTML = h || '<tr><td colspan="13" class="empty">Belum ada jurnal pada pilihan ini. Isi form di atas lalu pilih Simpan jurnal.</td></tr>';
-  $('foot').innerHTML = l.length ? '<tr><td colspan="7">Total ' + l.length + ' pertemuan</td><td class="n">' + t.total + '</td><td class="n">' + t.hadir + '</td><td class="n">' + t.sakit + '</td><td class="n">' + t.izin + '</td><td class="n">' + t.alpa + '</td><td></td></tr>' : '';
-
-  const b = $('bulan').value;
-  $('ph').innerHTML = '<h2>Jurnal Harian Mengajar</h2><div>Guru: ' + esc((me.peran === 'admin' && $('fg').value) || (me.peran === 'admin' ? 'Semua guru' : me.nama)) + ' | Periode: ' + esc(b ? BLN[+b.slice(5) - 1] + ' ' + b.slice(0,4) : 'Semua bulan') + '</div>';
+  const l=view(),t={total:0,hadir:0,sakit:0,izin:0,alpa:0};let h='';
+  l.forEach((r,i)=>{for(const k in t)t[k]+=r[k];h+='<tr><td class="n">'+(i+1)+'</td><td>'+esc(fmt(r.tgl))+'</td><td>'+esc(r.guru)+'</td><td class="n">'+esc(r.jam)+'</td><td>'+esc(r.kelas)+'</td><td>'+esc(r.mapel)+'</td><td>'+esc(r.materi)+(r.ket?'<br><small>'+esc(r.ket)+'</small>':'')+'</td><td class="n">'+esc(r.total)+'</td><td class="n">'+esc(r.hadir)+'</td><td class="n">'+esc(r.sakit)+'</td><td class="n">'+esc(r.izin)+'</td><td class="n">'+esc(r.alpa)+'</td><td>'+esc(r.ket||'')+'</td></tr>'});
+  $('rows').innerHTML=h||'<tr><td colspan="13" class="empty">Belum ada jurnal pada pilihan ini. Isi form di atas lalu pilih Simpan jurnal.</td></tr>';
+  $('foot').innerHTML=l.length?'<tr><td colspan="7">Total '+l.length+' pertemuan</td><td class="n">'+t.total+'</td><td class="n">'+t.hadir+'</td><td class="n">'+t.sakit+'</td><td class="n">'+t.izin+'</td><td class="n">'+t.alpa+'</td><td></td></tr>':'';
+  const b=$('bulan').value;
+  $('ph').innerHTML='<h2>Jurnal Harian Mengajar</h2><div>Guru: '+esc((me&&me.peran==='admin'&&$('fg').value)||(me&&me.peran==='admin'?'Semua guru':me?me.nama:''))+' | Periode: '+esc(b?BLN[+b.slice(5)-1]+' '+b.slice(0,4):'Semua bulan')+'</div>';
 }
 
-function edit(id){
-  const r = data.find(x => x.id === id);
-  if (!r) return;
-  editId = id;
-  $('ftitle').textContent = 'Ubah jurnal';
-  $('save').textContent = 'Simpan perubahan';
-  ['tgl','jam','kelas','mapel','materi','total','sakit','izin','alpa','ket'].forEach(k => $(k).value = r[k]);
-  if (![...$('guru').options].some(o => o.value === r.guru)) $('guru').add(new Option(r.guru));
-  $('guru').value = r.guru;
-  setHari();
-  hitung();
-  $('formcard').scrollIntoView({ behavior: 'smooth' });
-}
+function edit(id){const r=data.find(x=>x.id===id);if(!r)return;editId=id;$('ftitle').textContent='Ubah jurnal';$('save').textContent='Simpan perubahan';['tgl','jam','kelas','mapel','materi','total','sakit','izin','alpa','ket'].forEach(k=>$(k).value=r[k]);if(![...$('guru').options].some(o=>o.value===r.guru))$('guru').add(new Option(r.guru));$('guru').value=r.guru;setHari();hitung();$('formcard').scrollIntoView({behavior:'smooth'})}
 
-async function del(id){
-  if (!confirm('Hapus jurnal ini? Data yang dihapus tidak bisa dikembalikan.')) return;
-  const r = await api({ aksi: 'hapus', id });
-  toast(r.ok ? 'Jurnal dihapus.' : r.pesan);
-  if (r.ok) await refresh();
-}
+async function del(id){if(!confirm('Hapus jurnal ini? Data yang dihapus tidak bisa dikembalikan.'))return;const r=await api({aksi:'hapus',id});toast(r.ok?'Jurnal dihapus.':r.pesan);if(r.ok)await refresh()}
 
-function csv(){
-  const l = view();
-  if (!l.length) { toast('Tidak ada data untuk diunduh.'); return; }
+function csv(){const l=view();if(!l.length){toast('Tidak ada data untuk diunduh.');return}const rows=[['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Keterangan']];l.forEach((r,i)=>rows.push([i+1,HARI[parts(r.tgl).getDay()],r.tgl,r.guru,r.jam,r.kelas,r.mapel,r.materi,r.total,r.hadir,r.sakit,r.izin,r.alpa,r.ket]));const s=rows.map(r=>r.map(c=>{c=String(c);if(/^[=+\-@]/.test(c))c="'"+c;return '"'+c.replace(/"/g,'""')+'"'}).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv;charset=utf-8'}));a.download='jurnal-mengajar'+($('bulan').value?'-'+$('bulan').value:'')+'.csv';document.body.appendChild(a);a.click();a.remove()}
 
-  const rows = [['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Keterangan']];
-  l.forEach((r, i) => rows.push([i + 1, HARI[parts(r.tgl).getDay()], r.tgl, r.guru, r.jam, r.kelas, r.mapel, r.materi, r.total, r.hadir, r.sakit, r.izin, r.alpa, r.ket]));
-
-  const s = rows.map(r => r.map(c => {
-    c = String(c);
-    if (/^[=+\-@]/.test(c)) c = "'" + c;
-    return '"' + c.replace(/"/g, '""') + '"';
-  }).join(',')).join('\r\n');
-
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\ufeff' + s], { type: 'text/csv;charset=utf-8' }));
-  a.download = 'jurnal-mengajar' + ($('bulan').value ? '-' + $('bulan').value : '') + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-$('login').onclick = login;
-$('lp').onkeydown = e => { if (e.key === 'Enter') login(); };
-$('out').onclick = logout;
-$('tgl').onchange = setHari;
-['total','sakit','izin','alpa'].forEach(i => $(i).oninput = hitung);
-$('save').onclick = save;
-$('reset').onclick = () => clearForm(false);
-$('bulan').onchange = render;
-$('cari').oninput = render;
-$('fg').onchange = render;
-$('semua').onclick = () => { $('bulan').value = ''; render(); };
-$('rows').onclick = e => { const b = e.target; if (b.dataset.e) edit(b.dataset.e); if (b.dataset.d) del(b.dataset.d); };
-$('csv').onclick = csv;
-$('print').onclick = () => window.print();
-$('refresh').onclick = async () => { await refresh(); toast('Data dimuat ulang.'); };
-
-init();
+$('login').onclick=login;$('lp').onkeydown=e=>{if(e.key==='Enter')login()};$('out').onclick=logout;$('tgl').onchange=setHari;['total','sakit','izin','alpa'].forEach(i=>$(i).oninput=hitung);$('save').onclick=save;$('reset').onclick=()=>clearForm(false);$('bulan').onchange=render;$('cari').oninput=render;$('fg').onchange=render;$('semua').onclick=()=>{$('bulan').value='';render()};$('rows').onclick=e=>{const b=e.target;if(b.dataset.e)edit(b.dataset.e);if(b.dataset.d)del(b.dataset.d)};$('csv').onclick=csv;$('print').onclick=()=>window.print();$('refresh').onclick=async()=>{await refresh();toast('Data dimuat ulang.')};$('adminSave').onclick=saveAdminUser;$('adminAdd').onclick=()=>{resetAdminForm();$('adminNama').focus()};$('adminResetForm').onclick=resetAdminForm;$('adminRows').onclick=e=>{const target=e.target;if(!target) return;const index=target.dataset.editUser;const deleteIndex=target.dataset.deleteUser;if(index!==undefined){openAdminForm(Number(index));return}if(deleteIndex!==undefined){deleteAdminUser(Number(deleteIndex));}};init();
 </script>
 </body>
 </html>
