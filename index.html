@@ -6,21 +6,21 @@
 <title>Jurnal Harian Mengajar Guru</title>
 <style>
 :root{
-  --bg:#edf5f5;
-  --bg-2:#dfeaf7;
+  --bg:#f5f7fb;
+  --bg-2:#eaf0f7;
   --card:#ffffff;
-  --card-alt:#f6fbff;
-  --ink:#173240;
-  --muted:#5e7b8d;
-  --line:#dfeaf2;
-  --primary:#116d68;
-  --primary-strong:#0c514f;
+  --card-alt:#f9fbff;
+  --ink:#0f172a;
+  --muted:#334155;
+  --line:#94a3b8;
+  --primary:#0f766e;
+  --primary-strong:#0b5d5a;
   --primary-soft:#dff8f5;
-  --accent:#f59e0b;
+  --accent:#d97706;
   --accent-soft:#fff3d9;
-  --danger:#d84040;
-  --success:#1d9a6d;
-  --shadow:0 16px 36px rgba(17, 61, 77, 0.10);
+  --danger:#b91c1c;
+  --success:#166534;
+  --shadow:0 16px 36px rgba(15, 23, 42, 0.10);
   --radius:20px;
 }
 
@@ -30,9 +30,9 @@
     --bg-2:#0d1f2b;
     --card:#112c38;
     --card-alt:#143645;
-    --ink:#e7f5fb;
-    --muted:#9bb5bf;
-    --line:#1d4558;
+    --ink:#edf6ff;
+    --muted:#dfeaf3;
+    --line:#6d8ca0;
     --primary:#35c4bb;
     --primary-strong:#1ca9a2;
     --primary-soft:rgba(53,196,187,.12);
@@ -51,7 +51,7 @@ body{
   min-height:100vh;
   background:linear-gradient(180deg,var(--bg) 0%, var(--bg-2) 100%);
   color:var(--ink);
-  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 
 a{color:inherit}
@@ -64,10 +64,6 @@ button,input,select,textarea{font:inherit}
 @keyframes fadeDown{
   from{opacity:1; transform:translateY(0)}
   to{opacity:0; transform:translateY(12px)}
-}
-@keyframes pulseGlow{
-  0%,100%{box-shadow:0 0 0 rgba(17,109,104,0)}
-  50%{box-shadow:0 0 0 6px rgba(17,109,104,.08)}
 }
 
 header{
@@ -88,14 +84,14 @@ header .inner{
   gap:14px;
 }
 header h1{margin:0;font:700 1.25rem/1.2 Georgia,serif;letter-spacing:.02em}
-header p{margin:5px 0 0;font-size:.88rem;opacity:.92}
+header p{margin:5px 0 0;font-size:.9rem;opacity:.97}
 #out{
   border:1px solid rgba(255,255,255,.38);
   background:rgba(255,255,255,.08);
   color:#fff;
   border-radius:999px;
-  padding:8px 14px;
-  font-weight:600;
+  padding:9px 15px;
+  font-weight:700;
 }
 
 main{
@@ -134,17 +130,19 @@ h2{
 label{
   display:block;
   margin-bottom:6px;
-  color:var(--muted);
-  font-size:.82rem;
-  font-weight:700;
+  color:var(--ink);
+  font-size:.92rem;
+  font-weight:800;
 }
 input,textarea,select{
   width:100%;
   border:1px solid var(--line);
   border-radius:12px;
-  background:rgba(255,255,255,.72);
+  background:#fff;
   color:var(--ink);
-  padding:10px 12px;
+  padding:11px 12px;
+  font-size:1rem;
+  font-weight:600;
   transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 input:focus,textarea:focus,select:focus,button:focus-visible{
@@ -152,8 +150,9 @@ input:focus,textarea:focus,select:focus,button:focus-visible{
   border-color:var(--primary);
   box-shadow:0 0 0 4px rgba(17,109,104,.13);
 }
-input[readonly],select:disabled{opacity:.85}
-textarea{min-height:88px;resize:vertical}
+input[readonly],select:disabled{opacity:.9}
+textarea{min-height:94px;resize:vertical}
+::placeholder{color:#475569;opacity:1}
 
 .btns{
   display:flex;
@@ -167,9 +166,10 @@ button{
   border-radius:12px;
   background:linear-gradient(135deg,var(--primary) 0%, var(--primary-strong) 100%);
   color:#fff;
-  padding:10px 16px;
-  font-weight:700;
+  padding:11px 16px;
+  font-weight:800;
   cursor:pointer;
+  min-height:44px;
   transition:transform .15s ease, opacity .2s ease, box-shadow .2s ease;
   box-shadow:0 10px 18px rgba(17,109,104,.18);
 }
@@ -183,15 +183,16 @@ button.sec{
   box-shadow:none;
 }
 button.dg{
-  background:rgba(216,64,64,.08);
+  background:rgba(185,28,28,.08);
   color:var(--danger);
-  border:1px solid rgba(216,64,64,.18);
+  border:1px solid rgba(185,28,28,.18);
   box-shadow:none;
 }
 button.sm{
   padding:7px 10px;
   font-size:.77rem;
   border-radius:10px;
+  min-height:36px;
 }
 
 .tools{
@@ -205,7 +206,7 @@ button.sm{
   overflow-x:auto;
   border-radius:14px;
   border:1px solid var(--line);
-  background:rgba(255,255,255,.32);
+  background:rgba(255,255,255,.3);
 }
 table{
   width:100%;
@@ -245,12 +246,8 @@ tfoot td{font-weight:700;background:rgba(17,109,104,.04)}
   box-shadow:0 14px 30px rgba(15,23,42,.2);
 }
 .printhead,.hide{display:none}
-.is-exit{
-  animation:fadeDown .2s ease forwards;
-}
-.animate-in{
-  animation:fadeUp .36s ease both;
-}
+.is-exit{animation:fadeDown .2s ease forwards}
+.animate-in{animation:fadeUp .36s ease both}
 
 @media print{header,#formcard,.tools,.noprint,#toast{display:none!important} body{background:#fff;color:#000}.card{border:0;padding:0;box-shadow:none}.printhead{display:block;margin-bottom:10px}.table{min-width:0}th,td{font-size:10.5px;border:1px solid #888;color:#000}}
 
