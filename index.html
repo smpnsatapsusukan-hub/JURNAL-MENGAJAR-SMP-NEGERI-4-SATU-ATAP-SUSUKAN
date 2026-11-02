@@ -109,149 +109,393 @@ table{min-width:0}th,td{font-size:11px;border:1px solid #888;color:#000}}
 </main>
 <div id="toast" role="status"></div>
 <script>
-// Ganti dengan URL Web App dari Google Apps Script (berakhiran /exec)
-const API='https://script.google.com/macros/s/AKfycbysil41TPhhthqmhPzg4RzTTGhMQO8H9kgrMbhVX2KoCKQoBK771G-JLrsVArXKB-5B/exec';
-const GURU_FALLBACK='./data/guru.json';
+const STORAGE = {
+  guru: 'jurnalGuruList',
+  users: 'jurnalUserAccounts',
+  journals: 'jurnalData'
+};
+
+const DEFAULT_GURU = [
+  { nama: 'Admin Sekolah', peran: 'admin' },
+  { nama: 'Siti Aminah', peran: 'guru' },
+  { nama: 'Budi Santoso', peran: 'guru' },
+  { nama: 'Rina Wulandari', peran: 'guru' },
+  { nama: 'Dewi Lestari', peran: 'guru' },
+  { nama: 'Andi Prasetyo', peran: 'guru' }
+];
+
+const DEFAULT_USERS = [
+  { nama: 'Admin Sekolah', pin: '1234', peran: 'admin' },
+  { nama: 'Siti Aminah', pin: '1111', peran: 'guru' },
+  { nama: 'Budi Santoso', pin: '2222', peran: 'guru' },
+  { nama: 'Rina Wulandari', pin: '3333', peran: 'guru' },
+  { nama: 'Dewi Lestari', pin: '4444', peran: 'guru' },
+  { nama: 'Andi Prasetyo', pin: '5555', peran: 'guru' }
+];
 
 const HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const $=i=>document.getElementById(i);
 let me=null,data=[],editId=null,guruList=[];
-const esc=s=>String(s==null?'':s).replace(/[&<>"]'/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=v=>{v=parseInt(v,10);return isNaN(v)||v<0?0:v};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const parts=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])};
 const fmt=s=>{const d=parts(s);return HARI[d.getDay()]+', '+d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear()};
-function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
 
 function normalizeGuru(raw){
-  const arr = Array.isArray(raw) ? raw : Array.isArray(raw && raw.guru) ? raw.guru : [];
-  return arr
+  const list = Array.isArray(raw) ? raw : Array.isArray(raw && raw.guru) ? raw.guru : [];
+  return list
     .map(g => ({ nama: String(g && g.nama || '').trim(), peran: String(g && g.peran || 'guru').trim() }))
     .filter(g => g.nama);
 }
 
-async function loadGuruList(){
-  const sources = [
-    { label: 'Apps Script', fn: async () => {
-      const r = await fetch(API,{cache:'no-store'});
-      if(!r.ok) throw new Error('Apps Script tidak merespons');
-      const body = await r.json();
-      const list = normalizeGuru(body);
-      if(!list.length) throw new Error('Data guru kosong');
-      return list;
-    }},
-    { label: 'fallback file', fn: async () => {
-      const r = await fetch(GURU_FALLBACK,{cache:'no-store'});
-      if(!r.ok) throw new Error('File fallback tidak ditemukan');
-      const body = await r.json();
-      const list = normalizeGuru(body);
-      if(!list.length) throw new Error('File fallback kosong');
-      return list;
-    }}
-  ];
-
-  for (const source of sources) {
-    try {
-      return await source.fn();
-    } catch (error) {
-      console.warn(`Gagal memuat daftar guru dari ${source.label}:`, error);
+function ensureSeedData(){
+  try {
+    const storedGuru = JSON.parse(localStorage.getItem(STORAGE.guru) || 'null');
+    if (!storedGuru || !Array.isArray(storedGuru) || !storedGuru.length) {
+      localStorage.setItem(STORAGE.guru, JSON.stringify(DEFAULT_GURU));
     }
+
+    const storedUsers = JSON.parse(localStorage.getItem(STORAGE.users) || 'null');
+    if (!storedUsers || !Array.isArray(storedUsers) || !storedUsers.length) {
+      localStorage.setItem(STORAGE.users, JSON.stringify(DEFAULT_USERS));
+    }
+
+    const storedData = JSON.parse(localStorage.getItem(STORAGE.journals) || 'null');
+    if (!Array.isArray(storedData)) {
+      localStorage.setItem(STORAGE.journals, JSON.stringify([]));
+    }
+  } catch (e) {
+    console.warn('Seed local storage gagal:', e);
+  }
+}
+
+async function loadGuruList(){
+  ensureSeedData();
+  try {
+    const resp = await fetch('./data/guru.json', { cache: 'no-store' });
+    if (resp.ok) {
+      const body = await resp.json();
+      const list = normalizeGuru(body);
+      if (list.length) {
+        localStorage.setItem(STORAGE.guru, JSON.stringify(list));
+        return list;
+      }
+    }
+  } catch (e) {
+    console.warn('File data/guru.json tidak terbaca, memakai data lokal:', e);
   }
 
-  $('lerr').textContent = 'Gagal memuat daftar guru. Pastikan URL Web App aktif atau isi file data/guru.json dengan daftar nama guru.';
-  $('ln').innerHTML = '<option value="">Daftar guru tidak tersedia</option>';
-  return [];
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE.guru) || 'null');
+    const list = normalizeGuru(stored || DEFAULT_GURU);
+    if (list.length) return list;
+  } catch (e) {}
+
+  return normalizeGuru(DEFAULT_GURU);
+}
+
+function getUsers(){
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE.users) || 'null');
+    return Array.isArray(stored) && stored.length ? stored : DEFAULT_USERS;
+  } catch (e) {
+    return DEFAULT_USERS;
+  }
+}
+
+function getJournals(){
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE.journals) || 'null');
+    return Array.isArray(stored) ? stored : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveJournals(list){
+  localStorage.setItem(STORAGE.journals, JSON.stringify(list));
 }
 
 async function api(body){
-  try{const r=await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({nama:me&&me.nama,pin:me&&me.pin},body))});return await r.json()}
-  catch(e){return{ok:false,pesan:'Tidak bisa terhubung ke server. Periksa internet dan URL Web App.'}}}
-function busy(btn,on){btn.disabled=on}
+  ensureSeedData();
+  const action = body && body.aksi;
+  const users = getUsers();
+
+  if (action === 'masuk') {
+    const user = users.find(u => u.nama === String(body.nama || '').trim());
+    if (!user) return { ok: false, pesan: 'Nama guru tidak terdaftar.' };
+    if (String(user.pin) !== String(body.pin || '')) return { ok: false, pesan: 'PIN salah.' };
+    return { ok: true, nama: user.nama, peran: user.peran || 'guru' };
+  }
+
+  if (action === 'daftar') {
+    return { ok: true, data: getJournals().sort((a,b)=>String(a.tgl).localeCompare(String(b.tgl))) };
+  }
+
+  if (action === 'simpan') {
+    const item = body.jurnal || {};
+    const base = { ...item, hadir: n(item.total) - n(item.sakit) - n(item.izin) - n(item.alpa) };
+    const list = getJournals();
+    if (base.id) {
+      const idx = list.findIndex(x => String(x.id) === String(base.id));
+      if (idx >= 0) list[idx] = { ...list[idx], ...base }; else list.push(base);
+    } else {
+      base.id = Date.now() + Math.random().toString(16).slice(2);
+      list.push(base);
+    }
+    saveJournals(list);
+    return { ok: true, id: base.id };
+  }
+
+  if (action === 'hapus') {
+    const id = body.id;
+    const list = getJournals().filter(x => String(x.id) !== String(id));
+    saveJournals(list);
+    return { ok: true };
+  }
+
+  return { ok: false, pesan: 'Aksi tidak didukung di mode offline.' };
+}
+
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
 
 async function init(){
-  if(API.indexOf('GANTI')===0){$('lerr').textContent='URL Web App belum diisi di berkas index.html.';return}
   guruList = await loadGuruList();
-  if(!guruList.length){return}
-  $('ln').innerHTML='<option value="">Pilih nama Anda</option>'+guruList.map(g=>'<option>'+esc(g.nama)+'</option>').join('');
-  try{const s=JSON.parse(localStorage.getItem('jurnalLogin'));if(s){me=s;const r=await api({aksi:'masuk'});if(r.ok){me={nama:r.nama,pin:s.pin,peran:r.peran};return start()}me=null}}catch(e){me=null}
+  if (!guruList.length) {
+    $('lerr').textContent = 'Daftar guru tidak tersedia.';
+    return;
+  }
+
+  $('ln').innerHTML = '<option value="">Pilih nama Anda</option>' + guruList.map(g => '<option>' + esc(g.nama) + '</option>').join('');
+
+  try {
+    const s = JSON.parse(localStorage.getItem('jurnalLogin') || 'null');
+    if (s && s.nama) {
+      me = s;
+      const r = await api({ aksi: 'masuk', nama: s.nama, pin: s.pin });
+      if (r.ok) {
+        me = { nama: r.nama, pin: s.pin, peran: r.peran };
+        return start();
+      }
+      me = null;
+    }
+  } catch (e) { me = null; }
 }
+
 async function login(){
-  const nama=$('ln').value,pin=$('lp').value.trim();$('lerr').textContent='';
-  if(!nama||!pin){$('lerr').textContent='Pilih nama dan isi PIN.';return}
-  busy($('login'),true);me={nama,pin};const r=await api({aksi:'masuk'});busy($('login'),false);
-  if(!r.ok){me=null;$('lerr').textContent=r.pesan;return}
-  me={nama:r.nama,pin,peran:r.peran};
-  try{localStorage.setItem('jurnalLogin',JSON.stringify(me))}catch(e){}
-  start()
+  const nama = $('ln').value;
+  const pin = $('lp').value.trim();
+  $('lerr').textContent = '';
+  if (!nama || !pin) {
+    $('lerr').textContent = 'Pilih nama dan isi PIN.';
+    return;
+  }
+
+  busy($('login'), true);
+  me = { nama, pin };
+  const r = await api({ aksi: 'masuk', nama, pin });
+  busy($('login'), false);
+
+  if (!r.ok) {
+    me = null;
+    $('lerr').textContent = r.pesan;
+    return;
+  }
+
+  me = { nama: r.nama, pin, peran: r.peran };
+  try { localStorage.setItem('jurnalLogin', JSON.stringify(me)); } catch (e) {}
+  start();
 }
-function logout(){try{localStorage.removeItem('jurnalLogin')}catch(e){}location.reload()}
+
+function logout(){
+  try { localStorage.removeItem('jurnalLogin'); } catch (e) {}
+  location.reload();
+}
+
+function busy(btn, on){ btn.disabled = on; }
+
 async function start(){
-  $('loginbox').classList.add('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');
-  const admin=me.peran==='admin';
-  $('who').textContent=me.nama+(admin?' (admin)':'');
-  $('ltitle').textContent=admin?'Daftar jurnal semua guru':'Daftar jurnal saya';
-  const names=guruList.filter(g=>g.peran!=='admin').map(g=>g.nama);
-  $('guru').innerHTML=(admin?names:[me.nama]).map(x=>'<option>'+esc(x)+'</option>').join('')||'<option>'+esc(me.nama)+'</option>';
-  $('guru').disabled=!admin;
-  if(admin)$('fgbox').classList.remove('hide');
-  $('bulan').value=today().slice(0,7);clearForm(false);await refresh()
+  $('loginbox').classList.add('hide');
+  $('app').classList.remove('hide');
+  $('out').classList.remove('hide');
+
+  const admin = me.peran === 'admin';
+  $('who').textContent = me.nama + (admin ? ' (admin)' : '');
+  $('ltitle').textContent = admin ? 'Daftar jurnal semua guru' : 'Daftar jurnal saya';
+
+  const names = guruList.filter(g => g.peran !== 'admin').map(g => g.nama);
+  $('guru').innerHTML = (admin ? names : [me.nama]).map(x => '<option>' + esc(x) + '</option>').join('') || '<option>' + esc(me.nama) + '</option>';
+  $('guru').disabled = !admin;
+  if (admin) $('fgbox').classList.remove('hide');
+
+  $('bulan').value = today().slice(0, 7);
+  clearForm(false);
+  await refresh();
 }
+
 async function refresh(){
-  const r=await api({aksi:'daftar'});
-  if(!r.ok){toast(r.pesan);return}
-  data=r.data;
-  if(me.peran==='admin'){const cur=$('fg').value;const u=[...new Set(data.map(x=>x.guru))].sort();
-   $('fg').innerHTML='<option value="">Semua guru</option>'+u.map(x=>'<option>'+esc(x)+'</option>').join('');$('fg').value=u.includes(cur)?cur:''}
-  render()
+  const r = await api({ aksi: 'daftar' });
+  if (!r.ok) {
+    toast(r.pesan);
+    return;
+  }
+
+  data = Array.isArray(r.data) ? r.data : [];
+  if (me.peran === 'admin') {
+    const cur = $('fg').value;
+    const u = [...new Set(data.map(x => x.guru))].sort();
+    $('fg').innerHTML = '<option value="">Semua guru</option>' + u.map(x => '<option>' + esc(x) + '</option>').join('');
+    $('fg').value = u.includes(cur) ? cur : '';
+  }
+  render();
 }
-function setHari(){$('hari').value=$('tgl').value?HARI[parts($('tgl').value).getDay()]:''}
-function hitung(){$('hadir').value=n($('total').value)-n($('sakit').value)-n($('izin').value)-n($('alpa').value)}
-function clearForm(keep){editId=null;$('ftitle').textContent='Catat jurnal baru';$('save').textContent='Simpan jurnal';
-  ['jam','kelas','mapel','materi','ket'].forEach(i=>$(i).value='');['total','sakit','izin','alpa'].forEach(i=>$(i).value=0);
-  if(!keep)$('tgl').value=today();setHari();hitung()}
+
+function setHari(){ $('hari').value = $('tgl').value ? HARI[parts($('tgl').value).getDay()] : ''; }
+function hitung(){ $('hadir').value = n($('total').value) - n($('sakit').value) - n($('izin').value) - n($('alpa').value); }
+
+function clearForm(keep){
+  editId = null;
+  $('ftitle').textContent = 'Catat jurnal baru';
+  $('save').textContent = 'Simpan jurnal';
+  ['jam','kelas','mapel','materi','ket'].forEach(i => $(i).value = '');
+  ['total','sakit','izin','alpa'].forEach(i => $(i).value = 0);
+  if (!keep) $('tgl').value = today();
+  setHari();
+  hitung();
+}
+
 async function save(){
-  const r={id:editId,tgl:$('tgl').value,guru:$('guru').value,jam:$('jam').value.trim(),kelas:$('kelas').value.trim(),mapel:$('mapel').value.trim(),materi:$('materi').value.trim(),total:n($('total').value),sakit:n($('sakit').value),izin:n($('izin').value),alpa:n($('alpa').value),ket:$('ket').value.trim()};
-  if(!r.tgl||!r.guru||!r.jam||!r.mapel||!r.materi){toast('Lengkapi tanggal, nama guru, jam ke-, mata pelajaran, dan uraian materi.');return}
-  if(r.sakit+r.izin+r.alpa>r.total){toast('Jumlah sakit, izin, dan alpa melebihi jumlah siswa di kelas.');return}
-  busy($('save'),true);const res=await api({aksi:'simpan',jurnal:r});busy($('save'),false);
-  if(!res.ok){toast(res.pesan);return}
-  toast(editId?'Jurnal diperbarui.':'Jurnal tersimpan.');$('bulan').value=r.tgl.slice(0,7);clearForm(true);await refresh()}
-function view(){
-  const b=$('bulan').value,q=$('cari').value.toLowerCase(),g=me.peran==='admin'?$('fg').value:'';
-  return data.filter(r=>(!b||r.tgl.slice(0,7)===b)&&(!g||r.guru===g)&&(!q||(r.mapel+' '+r.kelas+' '+r.materi+' '+r.guru).toLowerCase().includes(q)))
-   .sort((a,c)=>a.tgl===c.tgl?a.jam.localeCompare(c.jam,'id',{numeric:true}):a.tgl<c.tgl?-1:1)}
-function render(){
-  const l=view(),t={total:0,hadir:0,sakit:0,izin:0,alpa:0};let h='';
-  l.forEach((r,i)=>{for(const k in t)t[k]+=r[k];
-   h+='<tr><td class="n">'+(i+1)+'</td><td>'+esc(fmt(r.tgl))+'</td><td>'+esc(r.guru)+'</td><td class="n">'+esc(r.jam)+'</td><td>'+esc(r.kelas)+'</td><td>'+esc(r.mapel)+'</td><td>'+esc(r.materi)+(r.ket?'<br><small>'+esc(r.ket)+'</small>':'')+'</td><td class="n">'+esc(r.total)+'</td><td class="n">'+esc(r.hadir)+'</td><td class="n">'+esc(r.sakit)+'</td><td class="n">'+esc(r.izin)+'</td><td class="n">'+esc(r.alpa)+'</td><td>'+esc(r.ket||'')+'</td></tr>'});
-  $('rows').innerHTML=h||'<tr><td colspan="13" class="empty">Belum ada jurnal pada pilihan ini. Isi form di atas lalu pilih Simpan jurnal.</td></tr>';
-  $('foot').innerHTML=l.length?'<tr><td colspan="7">Total '+l.length+' pertemuan</td><td class="n">'+t.total+'</td><td class="n">'+t.hadir+'</td><td class="n">'+t.sakit+'</td><td class="n">'+t.izin+'</td><td class="n">'+t.alpa+'</td><td></td></tr>':'';
-  const b=$('bulan').value;
-  $('ph').innerHTML='<h2>Jurnal Harian Mengajar</h2><div>Guru: '+esc((me.peran==='admin'&&$('fg').value)||(me.peran==='admin'?'Semua guru':me.nama))+' | Periode: '+esc(b?BLN[+b.slice(5)-1]+' '+b.slice(0,4):'Semua bulan')+'</div>';
+  const r = {
+    id: editId,
+    tgl: $('tgl').value,
+    guru: $('guru').value,
+    jam: $('jam').value.trim(),
+    kelas: $('kelas').value.trim(),
+    mapel: $('mapel').value.trim(),
+    materi: $('materi').value.trim(),
+    total: n($('total').value),
+    sakit: n($('sakit').value),
+    izin: n($('izin').value),
+    alpa: n($('alpa').value),
+    ket: $('ket').value.trim(),
+    hadir: n($('hadir').value)
+  };
+
+  if (!r.tgl || !r.guru || !r.jam || !r.mapel || !r.materi) {
+    toast('Lengkapi tanggal, nama guru, jam ke-, mata pelajaran, dan uraian materi.');
+    return;
+  }
+
+  if (r.sakit + r.izin + r.alpa > r.total) {
+    toast('Jumlah sakit, izin, dan alpa melebihi jumlah siswa di kelas.');
+    return;
+  }
+
+  busy($('save'), true);
+  const res = await api({ aksi: 'simpan', jurnal: r });
+  busy($('save'), false);
+
+  if (!res.ok) {
+    toast(res.pesan);
+    return;
+  }
+
+  toast(editId ? 'Jurnal diperbarui.' : 'Jurnal tersimpan.');
+  $('bulan').value = r.tgl.slice(0, 7);
+  clearForm(true);
+  await refresh();
 }
-function edit(id){const r=data.find(x=>x.id===id);if(!r)return;editId=id;
-  $('ftitle').textContent='Ubah jurnal';$('save').textContent='Simpan perubahan';
-  ['tgl','jam','kelas','mapel','materi','total','sakit','izin','alpa','ket'].forEach(k=>$(k).value=r[k]);
-  if(![...$('guru').options].some(o=>o.value===r.guru))$('guru').add(new Option(r.guru));
-  $('guru').value=r.guru;setHari();hitung();$('formcard').scrollIntoView({behavior:'smooth'})}
-async function del(id){if(!confirm('Hapus jurnal ini? Data yang dihapus tidak bisa dikembalikan.'))return;
-  const r=await api({aksi:'hapus',id});toast(r.ok?'Jurnal dihapus.':r.pesan);if(r.ok)await refresh()}
+
+function view(){
+  const b = $('bulan').value;
+  const q = $('cari').value.toLowerCase();
+  const g = me.peran === 'admin' ? $('fg').value : '';
+
+  return data.filter(r =>
+    (!b || r.tgl.slice(0, 7) === b) &&
+    (!g || r.guru === g) &&
+    (!q || (r.mapel + ' ' + r.kelas + ' ' + r.materi + ' ' + r.guru).toLowerCase().includes(q))
+  ).sort((a,c) => a.tgl === c.tgl ? a.jam.localeCompare(c.jam, 'id', { numeric: true }) : a.tgl < c.tgl ? -1 : 1);
+}
+
+function render(){
+  const l = view();
+  const t = { total: 0, hadir: 0, sakit: 0, izin: 0, alpa: 0 };
+  let h = '';
+
+  l.forEach((r, i) => {
+    for (const k in t) t[k] += r[k];
+    h += '<tr><td class="n">' + (i + 1) + '</td><td>' + esc(fmt(r.tgl)) + '</td><td>' + esc(r.guru) + '</td><td class="n">' + esc(r.jam) + '</td><td>' + esc(r.kelas) + '</td><td>' + esc(r.mapel) + '</td><td>' + esc(r.materi) + (r.ket ? '<br><small>' + esc(r.ket) + '</small>' : '') + '</td><td class="n">' + esc(r.total) + '</td><td class="n">' + esc(r.hadir) + '</td><td class="n">' + esc(r.sakit) + '</td><td class="n">' + esc(r.izin) + '</td><td class="n">' + esc(r.alpa) + '</td><td>' + esc(r.ket || '') + '</td></tr>';
+  });
+
+  $('rows').innerHTML = h || '<tr><td colspan="13" class="empty">Belum ada jurnal pada pilihan ini. Isi form di atas lalu pilih Simpan jurnal.</td></tr>';
+  $('foot').innerHTML = l.length ? '<tr><td colspan="7">Total ' + l.length + ' pertemuan</td><td class="n">' + t.total + '</td><td class="n">' + t.hadir + '</td><td class="n">' + t.sakit + '</td><td class="n">' + t.izin + '</td><td class="n">' + t.alpa + '</td><td></td></tr>' : '';
+
+  const b = $('bulan').value;
+  $('ph').innerHTML = '<h2>Jurnal Harian Mengajar</h2><div>Guru: ' + esc((me.peran === 'admin' && $('fg').value) || (me.peran === 'admin' ? 'Semua guru' : me.nama)) + ' | Periode: ' + esc(b ? BLN[+b.slice(5) - 1] + ' ' + b.slice(0,4) : 'Semua bulan') + '</div>';
+}
+
+function edit(id){
+  const r = data.find(x => x.id === id);
+  if (!r) return;
+  editId = id;
+  $('ftitle').textContent = 'Ubah jurnal';
+  $('save').textContent = 'Simpan perubahan';
+  ['tgl','jam','kelas','mapel','materi','total','sakit','izin','alpa','ket'].forEach(k => $(k).value = r[k]);
+  if (![...$('guru').options].some(o => o.value === r.guru)) $('guru').add(new Option(r.guru));
+  $('guru').value = r.guru;
+  setHari();
+  hitung();
+  $('formcard').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function del(id){
+  if (!confirm('Hapus jurnal ini? Data yang dihapus tidak bisa dikembalikan.')) return;
+  const r = await api({ aksi: 'hapus', id });
+  toast(r.ok ? 'Jurnal dihapus.' : r.pesan);
+  if (r.ok) await refresh();
+}
+
 function csv(){
-  const l=view();if(!l.length){toast('Tidak ada data untuk diunduh.');return}
-  const rows=[['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Keterangan']];
-  l.forEach((r,i)=>rows.push([i+1,HARI[parts(r.tgl).getDay()],r.tgl,r.guru,r.jam,r.kelas,r.mapel,r.materi,r.total,r.hadir,r.sakit,r.izin,r.alpa,r.ket]));
-  const s=rows.map(r=>r.map(c=>{c=String(c);if(/^[=+\-@]/.test(c))c="'"+c;return '"'+c.replace(/"/g,'""')+'"'}).join(',')).join('\r\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv;charset=utf-8'}));
-  a.download='jurnal-mengajar'+($('bulan').value?'-'+$('bulan').value:'')+'.csv';document.body.appendChild(a);a.click();a.remove()}
-$('login').onclick=login;$('lp').onkeydown=e=>{if(e.key==='Enter')login()};$('out').onclick=logout;
-$('tgl').onchange=setHari;['total','sakit','izin','alpa'].forEach(i=>$(i).oninput=hitung);
-$('save').onclick=save;$('reset').onclick=()=>clearForm(false);
-$('bulan').onchange=render;$('cari').oninput=render;$('fg').onchange=render;
-$('semua').onclick=()=>{$('bulan').value='';render()};
-$('rows').onclick=e=>{const b=e.target;if(b.dataset.e)edit(b.dataset.e);if(b.dataset.d)del(b.dataset.d)};
-$('csv').onclick=csv;$('print').onclick=()=>window.print();
-$('refresh').onclick=async()=>{await refresh();toast('Data dimuat ulang.')};
+  const l = view();
+  if (!l.length) { toast('Tidak ada data untuk diunduh.'); return; }
+
+  const rows = [['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Keterangan']];
+  l.forEach((r, i) => rows.push([i + 1, HARI[parts(r.tgl).getDay()], r.tgl, r.guru, r.jam, r.kelas, r.mapel, r.materi, r.total, r.hadir, r.sakit, r.izin, r.alpa, r.ket]));
+
+  const s = rows.map(r => r.map(c => {
+    c = String(c);
+    if (/^[=+\-@]/.test(c)) c = "'" + c;
+    return '"' + c.replace(/"/g, '""') + '"';
+  }).join(',')).join('\r\n');
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + s], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'jurnal-mengajar' + ($('bulan').value ? '-' + $('bulan').value : '') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+$('login').onclick = login;
+$('lp').onkeydown = e => { if (e.key === 'Enter') login(); };
+$('out').onclick = logout;
+$('tgl').onchange = setHari;
+['total','sakit','izin','alpa'].forEach(i => $(i).oninput = hitung);
+$('save').onclick = save;
+$('reset').onclick = () => clearForm(false);
+$('bulan').onchange = render;
+$('cari').oninput = render;
+$('fg').onchange = render;
+$('semua').onclick = () => { $('bulan').value = ''; render(); };
+$('rows').onclick = e => { const b = e.target; if (b.dataset.e) edit(b.dataset.e); if (b.dataset.d) del(b.dataset.d); };
+$('csv').onclick = csv;
+$('print').onclick = () => window.print();
+$('refresh').onclick = async () => { await refresh(); toast('Data dimuat ulang.'); };
+
 init();
 </script>
 </body>
