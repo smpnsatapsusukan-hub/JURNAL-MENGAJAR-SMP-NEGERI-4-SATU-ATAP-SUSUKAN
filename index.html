@@ -5,75 +5,244 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jurnal Harian Mengajar Guru</title>
 <style>
-:root{--bg:#eef2f6;--card:#fff;--ink:#1f2a37;--mute:#5b6b7c;--line:#d3dce6;--ac:#0f6b6b;--sk:#b45309;--iz:#1d4ed8;--al:#b91c1c;--hd:#166534;--bt:#fff}
-@media(prefers-color-scheme:dark){:root{--bg:#10171e;--card:#18222c;--ink:#e6edf3;--mute:#9aa9b8;--line:#2c3a48;--ac:#3fb5b5;--sk:#f59e0b;--iz:#7aa2ff;--al:#f87171;--hd:#4ade80;--bt:#06201f}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{background:var(--ac);color:var(--bt);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-header h1{margin:0;font:700 21px Georgia,serif}
-header p{margin:2px 0 0;font-size:14px;opacity:.9}
-main{max-width:1100px;margin:0 auto;padding:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
-.login{max-width:420px;margin:30px auto}
-h2{margin:0 0 12px;font:700 17px Georgia,serif}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.wide{grid-column:1/-1}
-label{display:block;font-size:13px;color:var(--mute);margin-bottom:3px}
-input,textarea,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
-input:focus,textarea:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
-input[readonly],select:disabled{opacity:.75}
-textarea{min-height:90px;resize:vertical}
-.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-button{padding:9px 14px;border:1px solid var(--ac);border-radius:7px;background:var(--ac);color:var(--bt);font:inherit;cursor:pointer}
-button:disabled{opacity:.6;cursor:wait}
-button.sec{background:transparent;color:var(--ac)}
-header button{background:transparent;color:var(--bt);border-color:var(--bt)}
-button.dg{background:transparent;border-color:var(--al);color:var(--al)}
-button.sm{padding:4px 9px;font-size:13px}
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
-.tools>div{flex:1 1 160px}
-.wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:900px}
-th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px}
-th{background:var(--bg);font-weight:600}
-.n{text-align:center;white-space:nowrap}
-.s{color:var(--sk)}.i{color:var(--iz)}.a{color:var(--al)}.h{color:var(--hd)}
-tfoot td{font-weight:700;background:var(--bg)}
-.empty{padding:24px;text-align:center;color:var(--mute)}
-.note{font-size:13px;color:var(--mute);margin:10px 0 0}
-.err{color:var(--al);font-size:14px;margin:8px 0 0}
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:7px;display:none;z-index:9}
-.printhead,.hide{display:none}
-@media print{header,#formcard,.tools,.noprint,#toast{display:none!important}
-body{background:#fff;color:#000}.card{border:0;padding:0}.printhead{display:block;margin-bottom:10px}
-table{min-width:0}th,td{font-size:11px;border:1px solid #888;color:#000}}
-@media (max-width: 768px){
-  body{font-size:14px}
-  header{padding:12px}
-  header h1{font-size:18px}
-  main{padding:12px}
-  .login{margin:20px auto}
-  .grid{grid-template-columns:1fr}
-  .btns{display:grid;grid-template-columns:1fr}
-  .btns > button,.btns > .sec{width:100%}
-  header button{width:auto}
-  .tools{display:grid;grid-template-columns:1fr}
-  .wrap{overflow-x:auto}
-  table{min-width:680px}
+:root{
+  --bg:#edf5f6;
+  --bg-2:#dfeaf3;
+  --card:#ffffff;
+  --ink:#16313f;
+  --muted:#557084;
+  --line:#d9e5ee;
+  --primary:#0f766e;
+  --primary-strong:#0b5d5a;
+  --accent:#f59e0b;
+  --danger:#dc2626;
+  --success:#059669;
+  --shadow:0 14px 32px rgba(15,23,42,.08);
+  --radius:18px;
 }
-@media (max-width: 480px){
-  header{align-items:flex-start}
-  header h1{font-size:17px}
-  .card{padding:12px}
-  .btns{gap:6px}
-  button{padding:10px 12px}
+
+@media (prefers-color-scheme: dark) {
+  :root{
+    --bg:#071922;
+    --bg-2:#0d1f2b;
+    --card:#122a35;
+    --ink:#e7f5fb;
+    --muted:#9ab7c4;
+    --line:#1e3d50;
+    --primary:#2ec4b6;
+    --primary-strong:#1ab7ac;
+    --accent:#fbbf24;
+    --danger:#f87171;
+    --success:#4ade80;
+    --shadow:0 18px 40px rgba(2,8,23,.42);
+  }
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(180deg,var(--bg) 0%, var(--bg-2) 100%);
+  color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+
+a{color:inherit}
+button,input,select,textarea{font:inherit}
+header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:linear-gradient(135deg,var(--primary) 0%, var(--primary-strong) 100%);
+  color:#fff;
+  box-shadow:0 12px 28px rgba(11,93,90,.18);
+}
+header .inner{
+  max-width:1180px;
+  margin:0 auto;
+  padding:16px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+}
+header h1{margin:0;font:700 1.2rem/1.2 Georgia,serif;letter-spacing:.02em}
+header p{margin:5px 0 0;font-size:.88rem;opacity:.92}
+#out{
+  border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border-radius:999px;
+  padding:8px 14px;
+  font-weight:600;
+}
+
+main{
+  max-width:1180px;
+  margin:0 auto;
+  padding:18px 14px 28px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px;
+  margin-bottom:16px;
+}
+.login{
+  max-width:430px;
+  margin:28px auto 18px;
+}
+
+h2{
+  margin:0 0 14px;
+  font:700 1.05rem/1.3 Georgia,serif;
+  color:var(--ink);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+.wide{grid-column:1/-1}
+label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--muted);
+  font-size:.82rem;
+  font-weight:600;
+}
+input,textarea,select{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.65);
+  color:var(--ink);
+  padding:10px 12px;
+  transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+input:focus,textarea:focus,select:focus,button:focus-visible{
+  outline:none;
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px rgba(15,118,110,.13);
+}
+input[readonly],select:disabled{opacity:.8}
+textarea{min-height:88px;resize:vertical}
+
+.btns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+button{
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--primary) 0%, var(--primary-strong) 100%);
+  color:#fff;
+  padding:10px 16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s ease, opacity .2s ease, box-shadow .2s ease;
+  box-shadow:0 8px 18px rgba(15,118,110,.18);
+}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:disabled{opacity:.6;cursor:wait;transform:none}
+button.sec{
+  background:transparent;
+  color:var(--primary);
+  border:1px solid rgba(15,118,110,.25);
+  box-shadow:none;
+}
+button.dg{
+  background:rgba(220,38,38,.08);
+  color:var(--danger);
+  border:1px solid rgba(220,38,38,.15);
+  box-shadow:none;
+}
+button.sm{
+  padding:7px 10px;
+  font-size:.78rem;
+  border-radius:10px;
+}
+
+.tools{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-bottom:14px;
+}
+.tools > div{min-width:0}
+.wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.35)}
+table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+  background:transparent;
+}
+th,td{
+  padding:10px 8px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  vertical-align:top;
+  font-size:.9rem;
+}
+th{
+  background:rgba(15,118,110,.04);
+  color:var(--ink);
+  font-weight:700;
+}
+.n{text-align:center;white-space:nowrap}
+.s{color:var(--accent)}.i{color:#2563eb}.a{color:var(--danger)}.h{color:var(--success)}
+tfoot td{font-weight:700;background:rgba(15,118,110,.04)}
+.empty{padding:26px 12px;text-align:center;color:var(--muted)}
+.note{font-size:.82rem;color:var(--muted);margin:10px 0 0}
+.err{color:var(--danger);font-size:.85rem;margin:8px 0 0}
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(15,23,42,.92);
+  color:#fff;
+  border-radius:999px;
+  padding:10px 16px;
+  display:none;
+  z-index:30;
+  box-shadow:0 14px 30px rgba(15,23,42,.2);
+}
+.printhead,.hide{display:none}
+@media print{header,#formcard,.tools,.noprint,#toast{display:none!important} body{background:#fff;color:#000}.card{border:0;padding:0;box-shadow:none}.printhead{display:block;margin-bottom:10px}.table{min-width:0}th,td{font-size:10.5px;border:1px solid #888;color:#000}}
+
+@media (min-width: 640px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tools{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .btns{display:flex}
+}
+
+@media (min-width: 900px){
+  main{padding-top:26px}
+  .grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .wide{grid-column:span 3}
+  .tools{grid-template-columns:repeat(4,minmax(0,1fr));}
+  .card{padding:20px}
 }
 </style>
 </head>
 <body>
 <header>
-<div><h1>Jurnal Harian Mengajar Guru</h1><p id="who">Catat kegiatan mengajar dan kehadiran siswa</p></div>
-<button id="out" class="hide">Keluar</button>
+  <div class="inner">
+    <div>
+      <h1>Jurnal Harian Mengajar Guru</h1>
+      <p id="who">Catat kegiatan mengajar dan kehadiran siswa</p>
+    </div>
+    <button id="out" class="hide">Keluar</button>
+  </div>
 </header>
 <main>
 <section class="card login" id="loginbox">
@@ -137,7 +306,7 @@ table{min-width:0}th,td{font-size:11px;border:1px solid #888;color:#000}}
 </div>
 <div class="printhead" id="ph"></div>
 <div class="wrap"><table>
-<thead><tr><th class="n">No</th><th>Hari, tanggal</th><th>Nama guru</th><th class="n">Jam ke-</th><th>Kelas</th><th>Mata pelajaran</th><th>Uraian materi</th><th class="n">Jml</th><th class="n">Ha[...]
+<thead><tr><th class="n">No</th><th>Hari, tanggal</th><th>Nama guru</th><th class="n">Jam ke-</th><th>Kelas</th><th>Mata pelajaran</th><th>Uraian materi</th><th class="n">Jml</th><th class="n">Hadir</th><th class="n">Sakit</th><th class="n">Izin</th><th class="n">Alpa</th><th>Aksi</th></tr></thead>
 <tbody id="rows"></tbody><tfoot id="foot"></tfoot>
 </table></div>
 <div class="btns noprint">
@@ -520,7 +689,7 @@ async function refresh(){
 function setHari(){$('hari').value=$('tgl').value?HARI[parts($('tgl').value).getDay()]:''}
 function hitung(){$('hadir').value=n($('total').value)-n($('sakit').value)-n($('izin').value)-n($('alpa').value)}
 
-function clearForm(keep){editId=null;$('ftitle').textContent='Catat jurnal baru';$('save').textContent='Simpan jurnal';['jam','kelas','mapel','materi','ket'].forEach(i=>$(i).value='');['total','sakit','izin','alpa'].forEach(i=>$(i).value=i==='total'?0:0);$('tgl').value=today();$('hari').value=HARI[parts($('tgl').value).getDay()];$('hadir').value='0';if(!keep){$('guru').value=($('guru').options[0]||{}).value||'';}}
+function clearForm(keep){editId=null;$('ftitle').textContent='Catat jurnal baru';$('save').textContent='Simpan jurnal';['jam','kelas','mapel','materi','ket'].forEach(i=>$(i).value='');['total','sakit','izin','alpa'].forEach(i=>$(i).value=0);$('tgl').value=today();$('hari').value=HARI[parts($('tgl').value).getDay()];$('hadir').value='0';if(!keep){$('guru').value=($('guru').options[0]||{}).value||'';}}
 
 async function save(){
   const r={id:editId,tgl:$('tgl').value,guru:$('guru').value,jam:$('jam').value.trim(),kelas:$('kelas').value.trim(),mapel:$('mapel').value.trim(),materi:$('materi').value.trim(),total:n($('total').value),sakit:n($('sakit').value),izin:n($('izin').value),alpa:n($('alpa').value),ket:$('ket').value.trim()};
@@ -551,7 +720,7 @@ async function del(id){if(!confirm('Hapus jurnal ini? Data yang dihapus tidak bi
 
 function csv(){const l=view();if(!l.length){toast('Tidak ada data untuk diunduh.');return}const rows=[['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Catatan']];l.forEach((r,i)=>rows.push([i+1,fmt(r.tgl).split(',')[0],r.tgl,r.guru,r.jam,r.kelas,r.mapel,r.materi,r.total,r.hadir,r.sakit,r.izin,r.alpa,r.ket || '']));const csv=rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jurnal-harian.csv';a.click();URL.revokeObjectURL(a.href);}
 
-$('login').onclick=login;$('lp').onkeydown=e=>{if(e.key==='Enter')login()};$('out').onclick=logout;$('tgl').onchange=setHari;['total','sakit','izin','alpa'].forEach(i=>$(i).oninput=hitung);$('save').onclick=save;$('reset').onclick=()=>clearForm(false);$('semua').onclick=()=>{$('bulan').value='';render();};$('cari').oninput=render;$('month').oninput=render;$('csv').onclick=csv;$('print').onclick=()=>window.print();$('refresh').onclick=refresh;$('adminSave').onclick=saveAdminUser;$('adminAdd').onclick=()=>{resetAdminForm();$('adminNama').focus();};$('adminResetForm').onclick=resetAdminForm;document.addEventListener('click',e=>{const editBtn=e.target.closest('[data-edit]');if(editBtn){edit(editBtn.dataset.edit);return;}const delBtn=e.target.closest('[data-del]');if(delBtn){del(delBtn.dataset.del);return;}const editUser=e.target.closest('[data-edit-user]');if(editUser){openAdminForm(+editUser.dataset.editUser);return;}const delUser=e.target.closest('[data-delete-user]');if(delUser){deleteAdminUser(+delUser.dataset.deleteUser);return;}});$('adminPeran').value='guru';init();
+$('login').onclick=login;$('lp').onkeydown=e=>{if(e.key==='Enter')login()};$('out').onclick=logout;$('tgl').onchange=setHari;['total','sakit','izin','alpa'].forEach(i=>$(i).oninput=hitung);$('save').onclick=save;$('reset').onclick=()=>clearForm(false);$('semua').onclick=()=>{$('bulan').value='';render();};$('cari').oninput=render;$('bulan').oninput=render;$('csv').onclick=csv;$('print').onclick=()=>window.print();$('refresh').onclick=refresh;$('adminSave').onclick=saveAdminUser;$('adminAdd').onclick=()=>{resetAdminForm();$('adminNama').focus();};$('adminResetForm').onclick=resetAdminForm;document.addEventListener('click',e=>{const editBtn=e.target.closest('[data-edit]');if(editBtn){edit(editBtn.dataset.edit);return;}const delBtn=e.target.closest('[data-del]');if(delBtn){del(delBtn.dataset.del);return;}const editUser=e.target.closest('[data-edit-user]');if(editUser){openAdminForm(+editUser.dataset.editUser);return;}const delUser=e.target.closest('[data-delete-user]');if(delUser){deleteAdminUser(+delUser.dataset.deleteUser);return;}});$('adminPeran').value='guru';init();
 </script>
 </body>
 </html>
