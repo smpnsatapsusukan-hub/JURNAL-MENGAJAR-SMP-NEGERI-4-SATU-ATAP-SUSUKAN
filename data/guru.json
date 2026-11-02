@@ -1,0 +1,10 @@
+{
+  "guru": [
+    { "nama": "Admin Sekolah", "peran": "admin" },
+    { "nama": "Siti Aminah", "peran": "guru" },
+    { "nama": "Budi Santoso", "peran": "guru" },
+    { "nama": "Rina Wulandari", "peran": "guru" },
+    { "nama": "Dewi Lestari", "peran": "guru" },
+    { "nama": "Andi Prasetyo", "peran": "guru" }
+  ]
+}
