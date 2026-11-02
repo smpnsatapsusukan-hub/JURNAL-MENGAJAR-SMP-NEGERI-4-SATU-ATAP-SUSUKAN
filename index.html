@@ -6,35 +6,41 @@
 <title>Jurnal Harian Mengajar Guru</title>
 <style>
 :root{
-  --bg:#edf5f6;
-  --bg-2:#dfeaf3;
+  --bg:#edf5f5;
+  --bg-2:#dfeaf7;
   --card:#ffffff;
-  --ink:#16313f;
-  --muted:#557084;
-  --line:#d9e5ee;
-  --primary:#0f766e;
-  --primary-strong:#0b5d5a;
+  --card-alt:#f6fbff;
+  --ink:#173240;
+  --muted:#5e7b8d;
+  --line:#dfeaf2;
+  --primary:#116d68;
+  --primary-strong:#0c514f;
+  --primary-soft:#dff8f5;
   --accent:#f59e0b;
-  --danger:#dc2626;
-  --success:#059669;
-  --shadow:0 14px 32px rgba(15,23,42,.08);
-  --radius:18px;
+  --accent-soft:#fff3d9;
+  --danger:#d84040;
+  --success:#1d9a6d;
+  --shadow:0 16px 36px rgba(17, 61, 77, 0.10);
+  --radius:20px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root{
-    --bg:#071922;
+    --bg:#061a23;
     --bg-2:#0d1f2b;
-    --card:#122a35;
+    --card:#112c38;
+    --card-alt:#143645;
     --ink:#e7f5fb;
-    --muted:#9ab7c4;
-    --line:#1e3d50;
-    --primary:#2ec4b6;
-    --primary-strong:#1ab7ac;
+    --muted:#9bb5bf;
+    --line:#1d4558;
+    --primary:#35c4bb;
+    --primary-strong:#1ca9a2;
+    --primary-soft:rgba(53,196,187,.12);
     --accent:#fbbf24;
+    --accent-soft:rgba(251,191,36,.12);
     --danger:#f87171;
     --success:#4ade80;
-    --shadow:0 18px 40px rgba(2,8,23,.42);
+    --shadow:0 18px 42px rgba(2,8,23,.32);
   }
 }
 
@@ -50,13 +56,27 @@ body{
 
 a{color:inherit}
 button,input,select,textarea{font:inherit}
+
+@keyframes fadeUp{
+  from{opacity:0; transform:translateY(18px) scale(.985)}
+  to{opacity:1; transform:translateY(0) scale(1)}
+}
+@keyframes fadeDown{
+  from{opacity:1; transform:translateY(0)}
+  to{opacity:0; transform:translateY(12px)}
+}
+@keyframes pulseGlow{
+  0%,100%{box-shadow:0 0 0 rgba(17,109,104,0)}
+  50%{box-shadow:0 0 0 6px rgba(17,109,104,.08)}
+}
+
 header{
   position:sticky;
   top:0;
-  z-index:10;
+  z-index:20;
   background:linear-gradient(135deg,var(--primary) 0%, var(--primary-strong) 100%);
   color:#fff;
-  box-shadow:0 12px 28px rgba(11,93,90,.18);
+  box-shadow:0 10px 26px rgba(10,74,74,.18);
 }
 header .inner{
   max-width:1180px;
@@ -67,10 +87,10 @@ header .inner{
   align-items:center;
   gap:14px;
 }
-header h1{margin:0;font:700 1.2rem/1.2 Georgia,serif;letter-spacing:.02em}
+header h1{margin:0;font:700 1.25rem/1.2 Georgia,serif;letter-spacing:.02em}
 header p{margin:5px 0 0;font-size:.88rem;opacity:.92}
 #out{
-  border:1px solid rgba(255,255,255,.35);
+  border:1px solid rgba(255,255,255,.38);
   background:rgba(255,255,255,.08);
   color:#fff;
   border-radius:999px;
@@ -85,21 +105,23 @@ main{
 }
 
 .card{
-  background:var(--card);
+  background:linear-gradient(180deg,var(--card) 0%, var(--card-alt) 100%);
   border:1px solid var(--line);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
   padding:16px;
   margin-bottom:16px;
+  animation:fadeUp .42s ease both;
 }
 .login{
-  max-width:430px;
+  max-width:440px;
   margin:28px auto 18px;
+  border:1px solid rgba(17,109,104,.12);
 }
 
 h2{
   margin:0 0 14px;
-  font:700 1.05rem/1.3 Georgia,serif;
+  font:700 1.08rem/1.3 Georgia,serif;
   color:var(--ink);
 }
 
@@ -114,13 +136,13 @@ label{
   margin-bottom:6px;
   color:var(--muted);
   font-size:.82rem;
-  font-weight:600;
+  font-weight:700;
 }
 input,textarea,select{
   width:100%;
   border:1px solid var(--line);
   border-radius:12px;
-  background:rgba(255,255,255,.65);
+  background:rgba(255,255,255,.72);
   color:var(--ink);
   padding:10px 12px;
   transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
@@ -128,9 +150,9 @@ input,textarea,select{
 input:focus,textarea:focus,select:focus,button:focus-visible{
   outline:none;
   border-color:var(--primary);
-  box-shadow:0 0 0 4px rgba(15,118,110,.13);
+  box-shadow:0 0 0 4px rgba(17,109,104,.13);
 }
-input[readonly],select:disabled{opacity:.8}
+input[readonly],select:disabled{opacity:.85}
 textarea{min-height:88px;resize:vertical}
 
 .btns{
@@ -140,6 +162,7 @@ textarea{min-height:88px;resize:vertical}
   margin-top:14px;
 }
 button{
+  appearance:none;
   border:none;
   border-radius:12px;
   background:linear-gradient(135deg,var(--primary) 0%, var(--primary-strong) 100%);
@@ -148,7 +171,7 @@ button{
   font-weight:700;
   cursor:pointer;
   transition:transform .15s ease, opacity .2s ease, box-shadow .2s ease;
-  box-shadow:0 8px 18px rgba(15,118,110,.18);
+  box-shadow:0 10px 18px rgba(17,109,104,.18);
 }
 button:hover{transform:translateY(-1px)}
 button:active{transform:translateY(0)}
@@ -156,18 +179,18 @@ button:disabled{opacity:.6;cursor:wait;transform:none}
 button.sec{
   background:transparent;
   color:var(--primary);
-  border:1px solid rgba(15,118,110,.25);
+  border:1px solid rgba(17,109,104,.25);
   box-shadow:none;
 }
 button.dg{
-  background:rgba(220,38,38,.08);
+  background:rgba(216,64,64,.08);
   color:var(--danger);
-  border:1px solid rgba(220,38,38,.15);
+  border:1px solid rgba(216,64,64,.18);
   box-shadow:none;
 }
 button.sm{
   padding:7px 10px;
-  font-size:.78rem;
+  font-size:.77rem;
   border-radius:10px;
 }
 
@@ -178,7 +201,12 @@ button.sm{
   margin-bottom:14px;
 }
 .tools > div{min-width:0}
-.wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.35)}
+.wrap{
+  overflow-x:auto;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.32);
+}
 table{
   width:100%;
   min-width:760px;
@@ -193,13 +221,13 @@ th,td{
   font-size:.9rem;
 }
 th{
-  background:rgba(15,118,110,.04);
+  background:rgba(17,109,104,.04);
   color:var(--ink);
-  font-weight:700;
+  font-weight:800;
 }
 .n{text-align:center;white-space:nowrap}
 .s{color:var(--accent)}.i{color:#2563eb}.a{color:var(--danger)}.h{color:var(--success)}
-tfoot td{font-weight:700;background:rgba(15,118,110,.04)}
+tfoot td{font-weight:700;background:rgba(17,109,104,.04)}
 .empty{padding:26px 12px;text-align:center;color:var(--muted)}
 .note{font-size:.82rem;color:var(--muted);margin:10px 0 0}
 .err{color:var(--danger);font-size:.85rem;margin:8px 0 0}
@@ -217,12 +245,18 @@ tfoot td{font-weight:700;background:rgba(15,118,110,.04)}
   box-shadow:0 14px 30px rgba(15,23,42,.2);
 }
 .printhead,.hide{display:none}
+.is-exit{
+  animation:fadeDown .2s ease forwards;
+}
+.animate-in{
+  animation:fadeUp .36s ease both;
+}
+
 @media print{header,#formcard,.tools,.noprint,#toast{display:none!important} body{background:#fff;color:#000}.card{border:0;padding:0;box-shadow:none}.printhead{display:block;margin-bottom:10px}.table{min-width:0}th,td{font-size:10.5px;border:1px solid #888;color:#000}}
 
 @media (min-width: 640px){
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));}
   .tools{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .btns{display:flex}
 }
 
 @media (min-width: 900px){
@@ -231,6 +265,24 @@ tfoot td{font-weight:700;background:rgba(15,118,110,.04)}
   .wide{grid-column:span 3}
   .tools{grid-template-columns:repeat(4,minmax(0,1fr));}
   .card{padding:20px}
+}
+
+@media (max-width: 640px){
+  header .inner{padding:14px 12px}
+  header h1{font-size:1.04rem}
+  header p{font-size:.76rem}
+  #out{padding:7px 12px;font-size:.8rem}
+  main{padding:12px 10px 22px}
+  .card{padding:14px;border-radius:16px;box-shadow:0 10px 22px rgba(17,61,77,.08)}
+  .login{margin:18px auto 12px}
+  .btns{display:grid;grid-template-columns:1fr}
+  .btns button{width:100%}
+  .tools{grid-template-columns:1fr}
+  .wrap{border-radius:10px}
+  table{min-width:620px}
+  th,td{padding:7px 5px;font-size:.72rem}
+  button.sm{padding:6px 8px}
+  input,textarea,select{padding:9px 10px;border-radius:10px}
 }
 </style>
 </head>
@@ -642,9 +694,23 @@ function deleteAdminUser(index){
 }
 
 async function start(){
-  $('loginbox').classList.add('hide');
-  $('app').classList.remove('hide');
-  $('out').classList.remove('hide');
+  const loginBox = $('loginbox');
+  const app = $('app');
+  const out = $('out');
+
+  if (!loginBox.classList.contains('hide')) {
+    loginBox.classList.add('is-exit');
+    setTimeout(() => loginBox.classList.add('hide'), 180);
+  }
+
+  app.classList.remove('hide');
+  app.classList.remove('is-exit');
+  app.classList.add('animate-in');
+  setTimeout(() => app.classList.remove('animate-in'), 400);
+
+  out.classList.remove('hide');
+  out.classList.add('animate-in');
+  setTimeout(() => out.classList.remove('animate-in'), 400);
 
   const admin = me.peran === 'admin';
   $('who').textContent = me.nama + (admin ? ' (admin)' : '');
