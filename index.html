@@ -47,6 +47,27 @@ tfoot td{font-weight:700;background:var(--bg)}
 @media print{header,#formcard,.tools,.noprint,#toast{display:none!important}
 body{background:#fff;color:#000}.card{border:0;padding:0}.printhead{display:block;margin-bottom:10px}
 table{min-width:0}th,td{font-size:11px;border:1px solid #888;color:#000}}
+@media (max-width: 768px){
+  body{font-size:14px}
+  header{padding:12px}
+  header h1{font-size:18px}
+  main{padding:12px}
+  .login{margin:20px auto}
+  .grid{grid-template-columns:1fr}
+  .btns{display:grid;grid-template-columns:1fr}
+  .btns > button,.btns > .sec{width:100%}
+  header button{width:auto}
+  .tools{display:grid;grid-template-columns:1fr}
+  .wrap{overflow-x:auto}
+  table{min-width:680px}
+}
+@media (max-width: 480px){
+  header{align-items:flex-start}
+  header h1{font-size:17px}
+  .card{padding:12px}
+  .btns{gap:6px}
+  button{padding:10px 12px}
+}
 </style>
 </head>
 <body>
@@ -116,7 +137,7 @@ table{min-width:0}th,td{font-size:11px;border:1px solid #888;color:#000}}
 </div>
 <div class="printhead" id="ph"></div>
 <div class="wrap"><table>
-<thead><tr><th class="n">No</th><th>Hari, tanggal</th><th>Nama guru</th><th class="n">Jam ke-</th><th>Kelas</th><th>Mata pelajaran</th><th>Uraian materi</th><th class="n">Jml</th><th class="n">Hadir</th><th class="n">Sakit</th><th class="n">Izin</th><th class="n">Alpa</th><th>Keterangan</th></tr></thead>
+<thead><tr><th class="n">No</th><th>Hari, tanggal</th><th>Nama guru</th><th class="n">Jam ke-</th><th>Kelas</th><th>Mata pelajaran</th><th>Uraian materi</th><th class="n">Jml</th><th class="n">Ha[...]
 <tbody id="rows"></tbody><tfoot id="foot"></tfoot>
 </table></div>
 <div class="btns noprint">
@@ -166,7 +187,7 @@ const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','S
 const $=i=>document.getElementById(i);
 let me=null,data=[],editId=null,guruList=[],adminEditIndex=null;
 
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const n=v=>{v=parseInt(v,10);return isNaN(v)||v<0?0:v};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const parts=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])};
@@ -499,38 +520,38 @@ async function refresh(){
 function setHari(){$('hari').value=$('tgl').value?HARI[parts($('tgl').value).getDay()]:''}
 function hitung(){$('hadir').value=n($('total').value)-n($('sakit').value)-n($('izin').value)-n($('alpa').value)}
 
-function clearForm(keep){editId=null;$('ftitle').textContent='Catat jurnal baru';$('save').textContent='Simpan jurnal';['jam','kelas','mapel','materi','ket'].forEach(i=>$(i).value='');['total','sakit','izin','alpa'].forEach(i=>$(i).value=0);if(!keep)$('tgl').value=today();setHari();hitung()}
+function clearForm(keep){editId=null;$('ftitle').textContent='Catat jurnal baru';$('save').textContent='Simpan jurnal';['jam','kelas','mapel','materi','ket'].forEach(i=>$(i).value='');['total','sakit','izin','alpa'].forEach(i=>$(i).value=i==='total'?0:0);$('tgl').value=today();$('hari').value=HARI[parts($('tgl').value).getDay()];$('hadir').value='0';if(!keep){$('guru').value=($('guru').options[0]||{}).value||'';}}
 
 async function save(){
-  const r={id:editId,tgl:$('tgl').value,guru:$('guru').value,jam:$('jam').value.trim(),kelas:$('kelas').value.trim(),mapel:$('mapel').value.trim(),materi:$('materi').value.trim(),total:n($('total').value),sakit:n($('sakit').value),izin:n($('izin').value),alpa:n($('alpa').value),ket:$('ket').value.trim(),hadir:n($('hadir').value)};
+  const r={id:editId,tgl:$('tgl').value,guru:$('guru').value,jam:$('jam').value.trim(),kelas:$('kelas').value.trim(),mapel:$('mapel').value.trim(),materi:$('materi').value.trim(),total:n($('total').value),sakit:n($('sakit').value),izin:n($('izin').value),alpa:n($('alpa').value),ket:$('ket').value.trim()};
   if(!r.tgl||!r.guru||!r.jam||!r.mapel||!r.materi){toast('Lengkapi tanggal, nama guru, jam ke-, mata pelajaran, dan uraian materi.');return}
   if(r.sakit+r.izin+r.alpa>r.total){toast('Jumlah sakit, izin, dan alpa melebihi jumlah siswa di kelas.');return}
   busy($('save'),true);const res=await api({aksi:'simpan',jurnal:r});busy($('save'),false);
   if(!res.ok){toast(res.pesan);return}
-  toast(editId?'Jurnal diperbarui.':'Jurnal tersimpan.');$('bulan').value=r.tgl.slice(0,7);clearForm(true);await refresh()
+  toast(editId?'Jurnal diperbarui.':'Jurnal tersimpan.');$('bulan').value=r.tgl.slice(0,7);clearForm(true);await refresh();
 }
 
 function view(){
   const b=$('bulan').value,q=$('cari').value.toLowerCase(),g=me&&me.peran==='admin'?$('fg').value:'';
-  return data.filter(r=>(!b||r.tgl.slice(0,7)===b)&&(!g||r.guru===g)&&(!q||(r.mapel+' '+r.kelas+' '+r.materi+' '+r.guru).toLowerCase().includes(q))).sort((a,c)=>a.tgl===c.tgl?a.jam.localeCompare(c.jam,'id',{numeric:true}):a.tgl<c.tgl?-1:1)
+  return data.filter(r=>(!b||r.tgl.slice(0,7)===b)&&(!g||r.guru===g)&&(!q||(r.mapel+' '+r.kelas+' '+r.materi+' '+r.guru).toLowerCase().includes(q))).sort((a,c)=>a.tgl===c.tgl?a.jam.localeCompare(c.jam):a.tgl.localeCompare(c.tgl));
 }
 
 function render(){
   const l=view(),t={total:0,hadir:0,sakit:0,izin:0,alpa:0};let h='';
-  l.forEach((r,i)=>{for(const k in t)t[k]+=r[k];h+='<tr><td class="n">'+(i+1)+'</td><td>'+esc(fmt(r.tgl))+'</td><td>'+esc(r.guru)+'</td><td class="n">'+esc(r.jam)+'</td><td>'+esc(r.kelas)+'</td><td>'+esc(r.mapel)+'</td><td>'+esc(r.materi)+(r.ket?'<br><small>'+esc(r.ket)+'</small>':'')+'</td><td class="n">'+esc(r.total)+'</td><td class="n">'+esc(r.hadir)+'</td><td class="n">'+esc(r.sakit)+'</td><td class="n">'+esc(r.izin)+'</td><td class="n">'+esc(r.alpa)+'</td><td>'+esc(r.ket||'')+'</td></tr>'});
+  l.forEach((r,i)=>{for(const k in t)t[k]+=r[k];h+='<tr><td class="n">'+(i+1)+'</td><td>'+esc(fmt(r.tgl))+'</td><td>'+esc(r.guru)+'</td><td class="n">'+esc(r.jam)+'</td><td>'+esc(r.kelas)+'</td><td>'+esc(r.mapel)+'</td><td>'+esc(r.materi)+'</td><td class="n">'+esc(r.total)+'</td><td class="n">'+esc(r.hadir)+'</td><td class="n">'+esc(r.sakit)+'</td><td class="n">'+esc(r.izin)+'</td><td class="n">'+esc(r.alpa)+'</td><td class="n"><button class="sm" data-edit="'+r.id+'">Edit</button> <button class="sm dg" data-del="'+r.id+'">Hapus</button></td></tr>'});
   $('rows').innerHTML=h||'<tr><td colspan="13" class="empty">Belum ada jurnal pada pilihan ini. Isi form di atas lalu pilih Simpan jurnal.</td></tr>';
   $('foot').innerHTML=l.length?'<tr><td colspan="7">Total '+l.length+' pertemuan</td><td class="n">'+t.total+'</td><td class="n">'+t.hadir+'</td><td class="n">'+t.sakit+'</td><td class="n">'+t.izin+'</td><td class="n">'+t.alpa+'</td><td></td></tr>':'';
   const b=$('bulan').value;
   $('ph').innerHTML='<h2>Jurnal Harian Mengajar</h2><div>Guru: '+esc((me&&me.peran==='admin'&&$('fg').value)||(me&&me.peran==='admin'?'Semua guru':me?me.nama:''))+' | Periode: '+esc(b?BLN[+b.slice(5)-1]+' '+b.slice(0,4):'Semua bulan')+'</div>';
 }
 
-function edit(id){const r=data.find(x=>x.id===id);if(!r)return;editId=id;$('ftitle').textContent='Ubah jurnal';$('save').textContent='Simpan perubahan';['tgl','jam','kelas','mapel','materi','total','sakit','izin','alpa','ket'].forEach(k=>$(k).value=r[k]);if(![...$('guru').options].some(o=>o.value===r.guru))$('guru').add(new Option(r.guru));$('guru').value=r.guru;setHari();hitung();$('formcard').scrollIntoView({behavior:'smooth'})}
+function edit(id){const r=data.find(x=>x.id===id);if(!r)return;editId=id;$('ftitle').textContent='Ubah jurnal';$('save').textContent='Simpan perubahan';['tgl','jam','kelas','mapel','materi','total','sakit','izin','alpa','ket'].forEach(k=>{$(k).value = r[k] ?? ''});$('hari').value=HARI[parts(r.tgl).getDay()];$('guru').value=r.guru;hitung();}
 
-async function del(id){if(!confirm('Hapus jurnal ini? Data yang dihapus tidak bisa dikembalikan.'))return;const r=await api({aksi:'hapus',id});toast(r.ok?'Jurnal dihapus.':r.pesan);if(r.ok)await refresh()}
+async function del(id){if(!confirm('Hapus jurnal ini? Data yang dihapus tidak bisa dikembalikan.'))return;const r=await api({aksi:'hapus',id});toast(r.ok?'Jurnal dihapus.':r.pesan);if(r.ok)await refresh();}
 
-function csv(){const l=view();if(!l.length){toast('Tidak ada data untuk diunduh.');return}const rows=[['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Keterangan']];l.forEach((r,i)=>rows.push([i+1,HARI[parts(r.tgl).getDay()],r.tgl,r.guru,r.jam,r.kelas,r.mapel,r.materi,r.total,r.hadir,r.sakit,r.izin,r.alpa,r.ket]));const s=rows.map(r=>r.map(c=>{c=String(c);if(/^[=+\-@]/.test(c))c="'"+c;return '"'+c.replace(/"/g,'""')+'"'}).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv;charset=utf-8'}));a.download='jurnal-mengajar'+($('bulan').value?'-'+$('bulan').value:'')+'.csv';document.body.appendChild(a);a.click();a.remove()}
+function csv(){const l=view();if(!l.length){toast('Tidak ada data untuk diunduh.');return}const rows=[['No','Hari','Tanggal','Nama Guru','Jam ke-','Kelas','Mata Pelajaran','Uraian Materi','Jumlah Siswa','Hadir','Sakit','Izin','Alpa','Catatan']];l.forEach((r,i)=>rows.push([i+1,fmt(r.tgl).split(',')[0],r.tgl,r.guru,r.jam,r.kelas,r.mapel,r.materi,r.total,r.hadir,r.sakit,r.izin,r.alpa,r.ket || '']));const csv=rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jurnal-harian.csv';a.click();URL.revokeObjectURL(a.href);}
 
-$('login').onclick=login;$('lp').onkeydown=e=>{if(e.key==='Enter')login()};$('out').onclick=logout;$('tgl').onchange=setHari;['total','sakit','izin','alpa'].forEach(i=>$(i).oninput=hitung);$('save').onclick=save;$('reset').onclick=()=>clearForm(false);$('bulan').onchange=render;$('cari').oninput=render;$('fg').onchange=render;$('semua').onclick=()=>{$('bulan').value='';render()};$('rows').onclick=e=>{const b=e.target;if(b.dataset.e)edit(b.dataset.e);if(b.dataset.d)del(b.dataset.d)};$('csv').onclick=csv;$('print').onclick=()=>window.print();$('refresh').onclick=async()=>{await refresh();toast('Data dimuat ulang.')};$('adminSave').onclick=saveAdminUser;$('adminAdd').onclick=()=>{resetAdminForm();$('adminNama').focus()};$('adminResetForm').onclick=resetAdminForm;$('adminRows').onclick=e=>{const target=e.target;if(!target) return;const index=target.dataset.editUser;const deleteIndex=target.dataset.deleteUser;if(index!==undefined){openAdminForm(Number(index));return}if(deleteIndex!==undefined){deleteAdminUser(Number(deleteIndex));}};init();
+$('login').onclick=login;$('lp').onkeydown=e=>{if(e.key==='Enter')login()};$('out').onclick=logout;$('tgl').onchange=setHari;['total','sakit','izin','alpa'].forEach(i=>$(i).oninput=hitung);$('save').onclick=save;$('reset').onclick=()=>clearForm(false);$('semua').onclick=()=>{$('bulan').value='';render();};$('cari').oninput=render;$('month').oninput=render;$('csv').onclick=csv;$('print').onclick=()=>window.print();$('refresh').onclick=refresh;$('adminSave').onclick=saveAdminUser;$('adminAdd').onclick=()=>{resetAdminForm();$('adminNama').focus();};$('adminResetForm').onclick=resetAdminForm;document.addEventListener('click',e=>{const editBtn=e.target.closest('[data-edit]');if(editBtn){edit(editBtn.dataset.edit);return;}const delBtn=e.target.closest('[data-del]');if(delBtn){del(delBtn.dataset.del);return;}const editUser=e.target.closest('[data-edit-user]');if(editUser){openAdminForm(+editUser.dataset.editUser);return;}const delUser=e.target.closest('[data-delete-user]');if(delUser){deleteAdminUser(+delUser.dataset.deleteUser);return;}});$('adminPeran').value='guru';init();
 </script>
 </body>
 </html>
