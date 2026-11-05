@@ -1,40 +1,48 @@
-# Google Sheets backend setup
+# Petunjuk mudah: Google Sheets + Apps Script
 
-This folder contains the shared-data backend for the journal application. The backend is intended to run in Google Apps Script, with the app UI hosted by the same Apps Script project. It is not a drop-in API for the current GitHub Pages URL: browser security prevents the existing static page from directly calling Apps Script in a reliable, readable way. The UI must be hosted as an Apps Script HTML file and use `google.script.run` for server calls.
+Dengan cara ini, data guru dan admin disimpan bersama di Google Sheets. Aplikasi harus dibuka lewat URL **Web app Apps Script**, bukan URL GitHub Pages lama.
 
-## 1. Create the spreadsheet
+## A. Buat sheet dan pasang aplikasi
 
-1. Create a Google Spreadsheet named `Jurnal Mengajar SMPN 4 SATU ATAP SUSUKAN`.
-2. Open **Extensions → Apps Script**.
-3. Replace the contents of `Code.gs` with `apps-script/Code.gs` from this repository.
-4. Add an Apps Script HTML file named `index` and copy the app UI into it. The current UI still uses browser `localStorage`; before deployment, its `api()` function and user-list operations must be switched to calls to the server `api()` function via `google.script.run`. The callback-based API can be wrapped in a Promise, for example:
+1. Masuk ke akun Google sekolah dan buat Google Spreadsheet, misalnya `Jurnal Mengajar SMPN 4 SATU ATAP SUSUKAN`.
+2. Di spreadsheet, pilih **Ekstensi → Apps Script**.
+3. Di editor Apps Script, buka `Code.gs`, hapus isi lama, lalu salin semua isi file [`Code.gs`](Code.gs) dari repositori ini dan tempelkan. Simpan.
+4. Klik tombol **+** di samping Files → pilih **HTML**. Beri nama tepat `index` (tanpa `.html`).
+5. Buka file [`index.html`](index.html) di repositori ini, salin seluruh isinya, dan tempel ke file `index` di Apps Script. Simpan.
+6. Dari dropdown pilihan fungsi di toolbar, pilih `setupSheets`, lalu klik **Run/Jalankan**. Berikan izin yang diminta. Kembali ke spreadsheet dan pastikan tab `users` dan `journals` sudah muncul.
 
-   ```js
-   function callServer(payload) {
-     payload.nama = me && me.nama;
-     payload.pin = me && me.pin;
-     return new Promise((resolve, reject) => {
-       google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).api(payload);
-     });
-   }
-   ```
+## B. Tambahkan akun
 
-   Login calls should pass the selected name and PIN directly and call `api()` with `{ aksi: 'masuk', nama, pin }`. For user administration, load `api({ aksi: 'users' })` and save changes with `api({ aksi: 'saveUsers', users })`; add the current admin name and PIN to those requests as with other authenticated calls.
-5. In Apps Script, select `setupSheets` and click **Run**. Approve access to the spreadsheet. This creates `users` and `journals` tabs with headers.
-6. In the spreadsheet's `users` tab, add an admin account and each teacher account. Use columns `nama`, `pin`, `peran`; `peran` must be `admin` or `guru`. Use new, private PINs; do not reuse the sample PINs from the existing static app.
-7. Deploy through **Deploy → New deployment → Web app**. Choose **Execute as: Me**. Restrict access to your school's Google accounts where possible. If the deployment must be available to people without school accounts, understand that the app's PIN login is not equivalent to Google identity authentication.
-8. The `doGet()` handler serves the Apps Script HTML file named `index`. The deployed web app URL is the app URL to share with staff, not the GitHub Pages URL.
+Pada tab `users`, gunakan baris pertama sebagai judul kolom dan isi data mulai baris kedua:
 
-## API behavior
+| nama | pin | peran |
+|---|---|---|
+| Admin Sekolah | PIN-ADMIN-BARU | admin |
+| Nama Guru 1 | PIN-GURU-BARU | guru |
 
-- `masuk`: checks the account and returns its role.
-- `daftar`: admins receive all journals; teachers receive only their own.
-- `simpan`: creates or updates a journal. The server assigns a teacher's identity from the authenticated account and calculates attendance.
-- `hapus`: admins can delete any journal; teachers can delete only their own.
-- `users` / `saveUsers`: admin-only account listing and update.
+Nama guru harus unik dan sama dengan yang dipakai untuk login. Buat PIN yang berbeda untuk setiap pengguna. Jangan pakai PIN contoh atau PIN yang pernah dibagikan. Batasi izin editor spreadsheet hanya untuk admin tepercaya karena tab ini menyimpan PIN.
 
-The `users` tab contains PINs, so limit spreadsheet editor access to trusted administrators. Apps Script calls must always send the signed-in user's name and PIN; role restrictions are enforced on the server as well as in the UI.
+## C. Deploy untuk dipakai guru
 
-## Important
+1. Di Apps Script, klik **Deploy → New deployment**.
+2. Pilih jenis **Web app**.
+3. Pilih **Execute as: Me** agar script menulis ke spreadsheet milik sekolah.
+4. Pada **Who has access**, pilih akses paling terbatas yang bisa digunakan semua pengguna sekolah (idealnya akun dalam organisasi sekolah). Jangan pilih akses publik kecuali sekolah memang menyetujui risikonya.
+5. Klik **Deploy**, selesaikan otorisasi, lalu salin URL web app.
+6. Buka URL itu dan coba login sebagai guru. Input satu jurnal. Lalu login sebagai admin dan pastikan jurnal terlihat. Bagikan URL web app itu kepada guru. GitHub Pages lama tidak tersambung dengan sheet.
 
-This commit adds the backend and setup instructions, but the currently deployed GitHub Pages app is not yet connected to it. Do not expect data to sync between devices until the HTML UI has been moved into the Apps Script project and its local-storage API calls have been replaced with `google.script.run` calls. Once the spreadsheet is created and you provide/confirm the deployment approach, the UI integration can be completed and tested.
+Saat mengubah kode setelah deploy, gunakan **Deploy → Manage deployments → Edit → New version → Deploy** agar URL web app menjalankan versi terbaru.
+
+## Cara penggunaan
+
+- Guru masuk menggunakan nama dan PIN yang ada di tab `users`, lalu mengisi jurnal. Guru hanya dapat melihat, mengubah, dan menghapus jurnal miliknya.
+- Admin masuk dengan akun berperan `admin`, dapat melihat jurnal semua guru dan memfilter berdasarkan guru.
+- Tombol **Muat ulang** mengambil perubahan terbaru dari spreadsheet.
+- Unduhan CSV dapat dibuka dengan Excel atau Google Sheets.
+- Jika daftar nama tidak muncul, periksa apakah `setupSheets()` sudah dijalankan dan tab `users` memiliki header `nama`, `pin`, `peran` serta akun yang valid.
+
+## Catatan keamanan dan migrasi
+
+PIN pada tab `users` disimpan sebagai teks biasa. Batasi akses spreadsheet, gunakan PIN unik, dan jangan bagikan kredensial. Sistem ini cocok untuk penggunaan internal sederhana; untuk autentikasi yang lebih kuat gunakan akun Google dan backend dengan pengelolaan identitas yang sesuai.
+
+Jurnal lama yang tersimpan di `localStorage` browser tidak otomatis pindah ke sheet. Ekspor/catat data lama secara terpisah jika perlu. Jangan gunakan GitHub Pages untuk input baru setelah guru mulai memakai URL Apps Script, agar tidak membuat dua sumber data berbeda.

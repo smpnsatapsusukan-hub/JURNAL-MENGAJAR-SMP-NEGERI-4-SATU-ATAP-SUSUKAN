@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jurnal Mengajar</title>
+  <style>
+    :root{font-family:Arial,sans-serif;color:#172033;background:#f2f6fa}*{box-sizing:border-box}body{margin:0}header{background:#087f78;color:white;padding:16px max(16px,calc((100% - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}h1{font-size:21px;margin:0}main{max-width:1100px;margin:22px auto;padding:0 14px}.card{background:white;border:1px solid #d6e0e8;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 16px #16324f0d}h2{font-size:18px;margin:0 0 14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}label{display:block;font-weight:700;font-size:14px;margin-bottom:5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:10px;border:1px solid #aebdca;border-radius:7px;background:white}textarea{min-height:80px;resize:vertical}.wide{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:7px;padding:10px 14px;background:#087f78;color:#fff;font-weight:700;cursor:pointer}button.secondary{background:#e8f1f3;color:#075b56}button.danger{background:#a83232}button:disabled{opacity:.55;cursor:wait}.toolbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:800px}th,td{text-align:left;padding:9px;border-bottom:1px solid #dbe3e9;vertical-align:top;font-size:14px}th{background:#f3f8f8}.hidden{display:none!important}.status{margin:8px 0;color:#a12626;min-height:20px}.muted{color:#536273;font-size:13px}.topright{display:flex;align-items:center;gap:10px}#who{font-weight:bold}.empty{text-align:center;padding:22px;color:#536273}@media(max-width:600px){header{padding:14px}h1{font-size:18px}main{margin-top:12px}.card{padding:14px}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Jurnal Harian Mengajar</h1>
+  <div class="topright"><span id="who"></span><button id="logout" class="secondary hidden" type="button">Keluar</button></div>
+</header>
+<main>
+  <section id="loginCard" class="card">
+    <h2>Masuk</h2>
+    <div class="grid">
+      <div><label for="loginName">Nama</label><select id="loginName"><option value="">Memuat daftar nama...</option></select></div>
+      <div><label for="loginPin">PIN</label><input id="loginPin" type="password" autocomplete="current-password" inputmode="numeric"></div>
+    </div>
+    <div class="actions"><button id="loginButton" type="button">Masuk</button></div>
+    <div id="loginStatus" class="status" role="status"></div>
+  </section>
+
+  <div id="application" class="hidden">
+    <section id="formCard" class="card">
+      <h2 id="formTitle">Isi jurnal</h2>
+      <div class="grid">
+        <div><label for="date">Tanggal</label><input id="date" type="date"></div>
+        <div id="teacherField"><label for="teacher">Nama guru</label><select id="teacher"></select></div>
+        <div><label for="period">Jam ke-</label><input id="period" placeholder="Contoh: 1-2"></div>
+        <div><label for="className">Kelas</label><input id="className" placeholder="Contoh: VII A"></div>
+        <div><label for="subject">Mata pelajaran</label><input id="subject"></div>
+        <div class="wide"><label for="material">Uraian materi</label><textarea id="material"></textarea></div>
+        <div><label for="total">Jumlah siswa</label><input id="total" type="number" min="0" value="0"></div>
+        <div><label for="sick">Sakit</label><input id="sick" type="number" min="0" value="0"></div>
+        <div><label for="permission">Izin</label><input id="permission" type="number" min="0" value="0"></div>
+        <div><label for="absent">Alpa</label><input id="absent" type="number" min="0" value="0"></div>
+        <div><label for="present">Hadir (otomatis)</label><input id="present" readonly></div>
+        <div class="wide"><label for="notes">Nama siswa tidak hadir/catatan</label><input id="notes"></div>
+      </div>
+      <div class="actions"><button id="saveButton" type="button">Simpan jurnal</button><button id="resetButton" class="secondary" type="button">Kosongkan</button></div>
+      <div id="formStatus" class="status" role="status"></div>
+    </section>
+
+    <section class="card">
+      <h2 id="listTitle">Daftar jurnal</h2>
+      <div class="toolbar">
+        <div><label for="month">Bulan</label><input id="month" type="month"></div>
+        <div id="filterField" class="hidden"><label for="filterTeacher">Filter guru</label><select id="filterTeacher"><option value="">Semua guru</option></select></div>
+        <div><label for="search">Cari</label><input id="search" placeholder="Mapel, kelas, materi"></div>
+        <div class="actions"><button id="refreshButton" class="secondary" type="button">Muat ulang</button></div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>No</th><th>Tanggal</th><th>Guru</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Materi</th><th>Jml</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpa</th><th>Catatan</th><th>Aksi</th></tr></thead>
+        <tbody id="journalRows"><tr><td class="empty" colspan="14">Silakan masuk.</td></tr></tbody>
+      </table></div>
+      <div class="actions"><button id="csvButton" class="secondary" type="button">Unduh CSV</button></div>
+      <p class="muted">Data disimpan di Google Sheets. Admin dapat melihat jurnal semua guru.</p>
+    </section>
+  </div>
+</main>
+<script>
+  'use strict';
+  let currentUser = null;
+  let journals = [];
+  let users = [];
+  let editingId = '';
+  const $ = id => document.getElementById(id);
+  const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const number = id => Math.max(0, parseInt($(id).value, 10) || 0);
+  const pad = n => String(n).padStart(2, '0');
+  const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
+
+  function server(payload) {
+    return new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(err => reject(new Error(err && err.message || 'Koneksi server gagal.'))).api(payload);
+    });
+  }
+  function request(payload) {
+    const body = Object.assign({}, payload);
+    if (currentUser) { body.nama = currentUser.nama; body.pin = currentUser.pin; }
+    return server(body);
+  }
+  function showError(id, message) { $(id).textContent = message || ''; }
+  function setBusy(button, busy) { $(button).disabled = busy; }
+
+  async function loadNames() {
+    try {
+      const result = await server({aksi:'daftarPengguna'});
+      if (!result.ok) throw new Error(result.pesan || 'Daftar nama gagal dimuat.');
+      users = result.data || [];
+      $('loginName').innerHTML = '<option value="">Pilih nama</option>' + users.map(u => '<option value="' + escapeHtml(u.nama) + '">' + escapeHtml(u.nama) + '</option>').join('');
+    } catch (err) {
+      $('loginName').innerHTML = '<option value="">Tidak dapat memuat nama</option>';
+      showError('loginStatus', err.message + ' Pastikan tab users sudah diisi dan Apps Script sudah diotorisasi.');
+    }
+  }
+
+  async function login() {
+    showError('loginStatus', '');
+    const nama = $('loginName').value;
+    const pin = $('loginPin').value.trim();
+    if (!nama || !pin) { showError('loginStatus', 'Pilih nama dan masukkan PIN.'); return; }
+    setBusy('loginButton', true);
+    try {
+      const result = await server({aksi:'masuk', nama, pin});
+      if (!result.ok) { showError('loginStatus', result.pesan); return; }
+      currentUser = {nama:result.nama, peran:result.peran, pin};
+      $('who').textContent = currentUser.nama + (currentUser.peran === 'admin' ? ' (admin)' : '');
+      $('loginCard').classList.add('hidden');
+      $('application').classList.remove('hidden');
+      $('logout').classList.remove('hidden');
+      $('listTitle').textContent = currentUser.peran === 'admin' ? 'Daftar jurnal semua guru' : 'Daftar jurnal saya';
+      const teachers = users.filter(u => u.peran !== 'admin');
+      $('teacher').innerHTML = teachers.map(u => '<option value="' + escapeHtml(u.nama) + '">' + escapeHtml(u.nama) + '</option>').join('');
+      $('teacherField').classList.toggle('hidden', currentUser.peran !== 'admin');
+      if (currentUser.peran === 'admin') $('filterField').classList.remove('hidden');
+      $('month').value = today().slice(0,7);
+      clearForm();
+      await refresh();
+    } catch (err) { showError('loginStatus', err.message); }
+    finally { setBusy('loginButton', false); }
+  }
+
+  function logout() {
+    currentUser = null; journals = []; editingId = '';
+    $('application').classList.add('hidden'); $('loginCard').classList.remove('hidden'); $('logout').classList.add('hidden'); $('who').textContent = '';
+    $('loginPin').value = ''; showError('loginStatus',''); loadNames();
+  }
+  function clearForm() {
+    editingId = ''; $('formTitle').textContent = 'Isi jurnal'; $('saveButton').textContent = 'Simpan jurnal';
+    $('date').value = today(); $('period').value = ''; $('className').value = ''; $('subject').value = ''; $('material').value = '';
+    $('total').value = '0'; $('sick').value = '0'; $('permission').value = '0'; $('absent').value = '0'; $('notes').value = '';
+    if (currentUser && currentUser.peran === 'guru') $('teacher').value = currentUser.nama;
+    showError('formStatus',''); calculatePresent();
+  }
+  function calculatePresent() {
+    const present = number('total') - number('sick') - number('permission') - number('absent');
+    $('present').value = Math.max(0, present);
+  }
+  async function refresh() {
+    showError('formStatus','');
+    try {
+      const result = await request({aksi:'daftar'});
+      if (!result.ok) throw new Error(result.pesan || 'Gagal memuat jurnal.');
+      journals = Array.isArray(result.data) ? result.data : [];
+      const names = [...new Set(journals.map(row => row.guru).filter(Boolean))].sort();
+      const previous = $('filterTeacher').value;
+      $('filterTeacher').innerHTML = '<option value="">Semua guru</option>' + names.map(name => '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>').join('');
+      if (names.includes(previous)) $('filterTeacher').value = previous;
+      render();
+    } catch (err) { showError('formStatus', err.message); }
+  }
+  function visibleJournals() {
+    const month = $('month').value, filter = $('filterTeacher').value, q = $('search').value.toLowerCase();
+    return journals.filter(row => (!month || String(row.tgl).slice(0,7) === month) && (currentUser.peran !== 'admin' || !filter || row.guru === filter) && (!q || [row.guru,row.mapel,row.kelas,row.materi].join(' ').toLowerCase().includes(q)))
+      .sort((a,b) => String(b.tgl).localeCompare(String(a.tgl)) || String(a.jam).localeCompare(String(b.jam)));
+  }
+  function render() {
+    const rows = visibleJournals();
+    $('journalRows').innerHTML = rows.length ? rows.map((r,i) => '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r.tgl)+'</td><td>'+escapeHtml(r.guru)+'</td><td>'+escapeHtml(r.jam)+'</td><td>'+escapeHtml(r.kelas)+'</td><td>'+escapeHtml(r.mapel)+'</td><td>'+escapeHtml(r.materi)+'</td><td>'+escapeHtml(r.total)+'</td><td>'+escapeHtml(r.hadir)+'</td><td>'+escapeHtml(r.sakit)+'</td><td>'+escapeHtml(r.izin)+'</td><td>'+escapeHtml(r.alpa)+'</td><td>'+escapeHtml(r.ket)+'</td><td><button class="secondary" type="button" data-edit="'+escapeHtml(r.id)+'">Edit</button> <button class="danger" type="button" data-delete="'+escapeHtml(r.id)+'">Hapus</button></td></tr>').join('') : '<tr><td class="empty" colspan="14">Belum ada jurnal untuk pilihan ini.</td></tr>';
+  }
+  async function saveJournal() {
+    const row = {id:editingId, tgl:$('date').value, guru:$('teacher').value, jam:$('period').value.trim(), kelas:$('className').value.trim(), mapel:$('subject').value.trim(), materi:$('material').value.trim(), total:number('total'), sakit:number('sick'), izin:number('permission'), alpa:number('absent'), ket:$('notes').value.trim()};
+    if (!row.tgl || !row.jam || !row.mapel || !row.materi) { showError('formStatus','Tanggal, jam, mapel, dan materi wajib diisi.'); return; }
+    if (row.sakit + row.izin + row.alpa > row.total) { showError('formStatus','Jumlah sakit, izin, dan alpa melebihi jumlah siswa.'); return; }
+    setBusy('saveButton', true);
+    try {
+      const result = await request({aksi:'simpan', jurnal:row});
+      if (!result.ok) throw new Error(result.pesan || 'Jurnal gagal disimpan.');
+      showError('formStatus','Jurnal tersimpan di Google Sheets.'); clearForm(); await refresh();
+    } catch (err) { showError('formStatus',err.message); }
+    finally { setBusy('saveButton',false); }
+  }
+  function editJournal(id) {
+    const row = journals.find(r => String(r.id) === id); if (!row) return;
+    editingId = row.id; $('formTitle').textContent='Ubah jurnal'; $('saveButton').textContent='Simpan perubahan';
+    $('date').value=String(row.tgl).slice(0,10); $('teacher').value=row.guru; $('period').value=row.jam; $('className').value=row.kelas; $('subject').value=row.mapel; $('material').value=row.materi;
+    $('total').value=row.total; $('sick').value=row.sakit; $('permission').value=row.izin; $('absent').value=row.alpa; $('notes').value=row.ket || ''; calculatePresent(); window.scrollTo({top:0,behavior:'smooth'});
+  }
+  async function deleteJournal(id) {
+    if (!window.confirm('Hapus jurnal ini?')) return;
+    try { const result=await request({aksi:'hapus',id}); if (!result.ok) throw new Error(result.pesan || 'Gagal menghapus jurnal.'); await refresh(); }
+    catch (err) { showError('formStatus',err.message); }
+  }
+  function downloadCsv() {
+    const rows = visibleJournals(); if (!rows.length) return;
+    const columns=['tgl','guru','jam','kelas','mapel','materi','total','hadir','sakit','izin','alpa','ket'];
+    const lines=[columns.join(',')].concat(rows.map(r=>columns.map(k=>'"'+String(r[k] == null ? '' : r[k]).replace(/"/g,'""')+'"').join(',')));
+    const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='jurnal-mengajar.csv'; a.click(); URL.revokeObjectURL(a.href);
+  }
+  $('loginButton').addEventListener('click',login); $('loginPin').addEventListener('keydown',e=>{if(e.key==='Enter')login();}); $('logout').addEventListener('click',logout);
+  $('saveButton').addEventListener('click',saveJournal); $('resetButton').addEventListener('click',clearForm); $('refreshButton').addEventListener('click',refresh); $('csvButton').addEventListener('click',downloadCsv);
+  ['total','sick','permission','absent'].forEach(id=>$(id).addEventListener('input',calculatePresent));
+  ['month','search','filterTeacher'].forEach(id=>$(id).addEventListener('input',render));
+  $('journalRows').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'); const del=e.target.closest('[data-delete]'); if(edit)editJournal(edit.dataset.edit); if(del)deleteJournal(del.dataset.delete);});
+  loadNames();
+</script>
+</body>
+</html>
